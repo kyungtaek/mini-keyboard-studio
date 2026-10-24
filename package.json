@@ -1,6 +1,6 @@
 {
   "name": "mini-keyboard-studio",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "Local macro keyboard editor and HID companion",
   "author": "Mini Keyboard Studio",
   "main": "desktop/main.mjs",
@@ -56,12 +56,55 @@
     "mac": {
       "target": [
         "dir",
+        "dmg",
         "zip"
       ],
       "category": "public.app-category.utilities",
       "icon": "desktop/icons/app.icns",
-      "identity": "-",
-      "hardenedRuntime": false
-    }
+      "identity": "Kyungtaek Lim (76VKZ62384)",
+      "hardenedRuntime": true,
+      "entitlements": "desktop/entitlements.mac.plist",
+      "entitlementsInherit": "desktop/entitlements.mac.plist",
+      "notarize": false,
+      "extendInfo": {
+        "CFBundleLocalizations": [
+          "en",
+          "ko",
+          "ja",
+          "es",
+          "zh-Hans",
+          "zh-Hant"
+        ],
+        "CFBundleDevelopmentRegion": "en"
+      }
+    },
+    "dmg": {
+      "sign": true,
+      "title": "Mini Keyboard Studio",
+      "artifactName": "Mini-Keyboard-Studio-${version}-${arch}.${ext}",
+      "contents": [
+        {
+          "x": 160,
+          "y": 180,
+          "type": "file"
+        },
+        {
+          "x": 440,
+          "y": 180,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "artifactName": "Mini-Keyboard-Studio-${version}-${arch}.${ext}",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "kyungtaek",
+        "repo": "mini-keyboard-studio",
+        "releaseType": "release"
+      }
+    ],
+    "forceCodeSigning": true
   }
 }

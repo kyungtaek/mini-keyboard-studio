@@ -1,3 +1,4 @@
+import { createDOMLocalizer, createLanguageController } from './i18n.js';
 import { createProfile, validateProfile, actionLabel, encodeShare, decodeShare, saveToLibrary, loadLibrary, deleteFromLibrary } from './profile.js';
 import { connectDevice } from './device.js';
 import { applyKeymap,lightingActivationNote } from './apply-keymap.js';
@@ -19,6 +20,7 @@ const MAX_FILE = 128 * 1024;
 const LED_RULES_KEY = 'mini-keyboard-studio:led-rules:v1';
 const ledStates = [{state:'working',name:'작업 중',symbol:'◌',color:'#539df5'},{state:'attention',name:'확인 필요',symbol:'!',color:'#ffa42b'},{state:'done',name:'완료',symbol:'✓',color:'#1ed760'},{state:'error',name:'오류',symbol:'×',color:'#f3727f'}];
 let ledWriteAllowed = false;
+let lightingChecking = false;
 const modelList = Array.isArray(MODELS) ? MODELS : Object.values(MODELS);
 const currentModel = () => getModel(profile.modelId);
 let sharedAtStartup = false;
@@ -34,6 +36,9 @@ let selected = 1;
 let device = null;
 let deviceSnapshot = null;
 let busy = false;
+let connecting = false;
+let pendingOffline = null;
+let presenceRevision = -1;
 let recording = false;
 let rotationChange = null;
 let shortcutApplicationId='system';
@@ -83,7 +88,7 @@ $('#app').innerHTML = `
   <input class="file-input" type="file" id="backup-file" accept=".json,application/json">
   <dialog id="new-profile-dialog" class="tool-dialog" aria-labelledby="new-profile-title"><div class="dialog-heading"><h2 id="new-profile-title">새 키맵</h2><button class="quiet small" data-close="new-profile-dialog" aria-label="닫기">${icon('close')}</button></div><form id="new-profile-form"><label class="field"><span class="field-label">키맵 이름</span><input id="new-profile-name" maxlength="80" required value="새 키맵"></label><label class="field"><span class="field-label">키보드 모델</span><select id="new-profile-model">${modelList.map(model=>`<option value="${model.id}">${escapeHTML(model.name)}</option>`).join('')}</select></label><div class="dialog-actions"><button type="button" data-close="new-profile-dialog">취소</button><button type="submit" class="primary">만들기</button></div></form></dialog>
   <dialog id="rotation-dialog" class="tool-dialog rotation-dialog" aria-labelledby="rotation-title"><div class="dialog-heading"><h2 id="rotation-title">변경된 방향으로 키를 다시 설정할까요?</h2><button class="quiet small" data-close="rotation-dialog" aria-label="닫기">${icon('close')}</button></div><div class="rotation-preview"><span class="rotation-symbol" aria-hidden="true">↻</span><strong id="rotation-target"></strong></div><p class="rotation-summary">세 레이어의 키를 기존 화면 위치에 맞춰 옮깁니다.<br>노브 설정은 유지합니다.</p><p class="error-text" id="rotation-reason" role="status"></p><div class="dialog-actions"><button data-close="rotation-dialog">화면 방향만 변경</button><button class="primary" data-action="apply-rotation" id="rotation-apply">키 재배치·적용</button></div></dialog>
-  <dialog id="files-dialog" class="tool-dialog" aria-labelledby="files-title"><div class="dialog-heading"><h2 id="files-title">파일·공유</h2><button class="quiet small" data-close="files-dialog" aria-label="닫기">${icon('close')}</button></div><div class="file-context">${icon('file')}<span id="file-profile-name"></span><span class="file-format">JSON</span></div><div class="tool-actions"><button data-action="import">${icon('import')}<span><strong>키맵 파일 열기</strong><small>JSON 파일에서 가져오기</small></span><span class="tool-arrow" aria-hidden="true">↗</span></button><button data-action="export">${icon('export')}<span><strong>파일로 내보내기</strong><small>현재 키맵 저장</small></span><span class="tool-arrow" aria-hidden="true">↗</span></button><button data-action="share">${icon('share')}<span><strong>링크로 공유</strong><small>키맵이 담긴 링크 만들기</small></span><span class="tool-arrow" aria-hidden="true">↗</span></button></div><div class="files-diagnostics"><button class="quiet small" data-action="input-debug">${icon('keyboard')}키 입력 진단</button><button class="quiet small" data-action="open-logs">${icon('clock')}진단 로그 폴더 열기</button></div></dialog>
+  <dialog id="files-dialog" class="tool-dialog" aria-labelledby="files-title"><div class="dialog-heading"><h2 id="files-title">파일·공유</h2><button class="quiet small" data-close="files-dialog" aria-label="닫기">${icon('close')}</button></div><div class="file-context">${icon('file')}<span id="file-profile-name" data-i18n-preserve></span><span class="file-format">JSON</span></div><div class="tool-actions"><button data-action="import">${icon('import')}<span><strong>키맵 파일 열기</strong><small>JSON 파일에서 가져오기</small></span><span class="tool-arrow" aria-hidden="true">↗</span></button><button data-action="export">${icon('export')}<span><strong>파일로 내보내기</strong><small>현재 키맵 저장</small></span><span class="tool-arrow" aria-hidden="true">↗</span></button><button data-action="share">${icon('share')}<span><strong>링크로 공유</strong><small>키맵이 담긴 링크 만들기</small></span><span class="tool-arrow" aria-hidden="true">↗</span></button></div><label class="language-setting"><span>언어</span><select id="language-select" aria-label="언어"><option value="en" lang="en">English</option><option value="ko" lang="ko">한국어</option><option value="ja" lang="ja">日本語</option><option value="es" lang="es">Español</option><option value="zh-CN" lang="zh-CN">简体中文</option><option value="zh-TW" lang="zh-TW">繁體中文</option></select></label><div class="files-diagnostics"><button class="quiet small" data-action="input-debug">${icon('keyboard')}키 입력 진단</button><button class="quiet small" data-action="open-logs">${icon('clock')}진단 로그 폴더 열기</button></div></dialog>
   <dialog id="devices-dialog" class="tool-dialog device-dialog" aria-labelledby="devices-title"><div class="dialog-heading"><h2 id="devices-title">장치 관리</h2><button class="quiet small" data-close="devices-dialog" aria-label="닫기">${icon('close')}</button></div><div class="device-portrait"><div class="mini-device" aria-hidden="true">${Array.from({length:16},()=>'<i></i>').join('')}<span>◉ ◉ ◉</span></div><div><h3 id="device-model-name">키보드</h3><span class="status" id="connection-status"><span class="status-dot"></span>장치 연결 전</span></div></div><div class="device-connection-row"><label class="transport-field"><span class="sr-only">연결 방식</span><select id="transport-select" aria-label="연결 방식"><option value="webhid">브라우저 USB</option><option value="companion">보조앱</option></select></label><button data-action="connect">${icon('usb')}<span>키보드 연결</span></button></div><p id="device-description" class="device-detail" role="status"></p><div class="device-utilities"><button class="quiet" data-action="read-device" id="read-device" disabled>${icon('import')}설정 읽기</button><button class="quiet" data-action="backups">${icon('clock')}장치 백업</button><button class="quiet" id="led-open-button" data-action="lighting" disabled title="보조앱 연결에서 사용" aria-label="상태·LED">${icon('light')}상태·LED</button></div></dialog>
   <dialog id="share-dialog" aria-labelledby="share-title"><div class="dialog-heading"><h2 id="share-title">키맵 링크 공유</h2><button class="quiet small" data-close="share-dialog" aria-label="닫기">${icon('close')}</button></div><p>키맵을 링크에 담았습니다. 링크를 받은 사람은 자신의 작업으로 열어 수정할 수 있습니다. 장치 백업은 포함하지 않습니다.</p><label class="sr-only" for="share-url">공유 링크</label><input class="share-input" id="share-url" readonly><p class="share-privacy">링크에는 키 입력과 매크로가 그대로 들어갑니다. 비밀번호 등 민감한 내용을 넣지 마세요.</p><div class="dialog-actions"><button data-action="copy-share" class="primary">링크 복사</button></div></dialog>
   <dialog id="presets-dialog" class="catalog-dialog" aria-labelledby="presets-title"><div class="dialog-heading"><div><h2 id="presets-title">키맵 카탈로그</h2><p class="catalog-subtitle">마음에 드는 키맵을 골라 내 키보드에 맞춰 보세요.</p></div><button class="quiet small" data-close="presets-dialog" aria-label="닫기">${icon('close')}</button></div>
@@ -107,7 +112,7 @@ function toast(message, error = false) {
   toastTimer = setTimeout(() => node.classList.remove('visible'), error ? 8000 : 4200);
 }
 function explain(error) { return error?.message || String(error); }
-function dateLabel(date) { const value = new Date(date); return Number.isNaN(value.getTime()) ? '날짜 없음' : value.toLocaleString('ko-KR', { month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' }); }
+function dateLabel(date) { const value = new Date(date); return Number.isNaN(value.getTime()) ? '날짜 없음' : value.toLocaleString(document.documentElement?.lang || 'ko', { month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' }); }
 function getAction(id = selected) { return profile.layers[layer].actions[id - 1]; }
 function getLabel(action) { try { return action?.label || actionLabel(action); } catch { return '알 수 없는 동작'; } }
 function shortLabel(action) {
@@ -164,7 +169,7 @@ function renderBoard() {
   layer = Math.min(layer,profile.layers.length-1);
   $('#key-grid').innerHTML = gridIds.map(id => {
     const value = boardValue(id);
-    return `<button class="keycap ${value.draft.type==='disabled'?'is-disabled':''} ${selected === id ? 'selected' : ''} ${value.draft.type==='preserve'&&!value.current?'is-preserve':''} ${value.changed?'has-change':''}" data-key="${id}" aria-label="키 ${id}: ${escapeHTML(value.title)}" aria-pressed="${selected === id}" title="${escapeHTML(value.title)}"><span class="key-inner"><span class="keycap-number">${String(id).padStart(2,'0')}</span>${value.changed?'<span class="key-change" aria-label="편집한 동작"></span>':''}${featureName(value.draft)?`<span class="keycap-function">${escapeHTML(featureName(value.draft))}</span>`:''}<span class="keycap-label">${escapeHTML(value.label)}</span></span></button>`;
+    return `<button class="keycap ${value.draft.type==='disabled'?'is-disabled':''} ${selected === id ? 'selected' : ''} ${value.draft.type==='preserve'&&!value.current?'is-preserve':''} ${value.changed?'has-change':''}" data-key="${id}" aria-label="키 ${id}: ${escapeHTML(value.title)}" aria-pressed="${selected === id}" title="${escapeHTML(value.title)}"><span class="key-inner"><span class="keycap-number">${String(id).padStart(2,'0')}</span>${value.changed?'<span class="key-change" aria-label="편집한 동작"></span>':''}${featureName(value.draft)?`<span class="keycap-function" ${value.draft.label?'data-i18n-preserve':''}>${escapeHTML(featureName(value.draft))}</span>`:''}<span class="keycap-label">${escapeHTML(value.label)}</span></span></button>`;
   }).join('');
   $('#encoders').innerHTML = Array.from({length:model.encoders},(_,index) => {
     const base = model.keys + 1 + index * 3;
@@ -265,7 +270,7 @@ function renderEditor() {
   const action = getAction();
   $('#selection-caption').textContent = `레이어 ${layer+1} / ${selectedName()}`;
   $('#selection-badge').textContent = selected <= currentModel().keys ? `Key ${String(selected).padStart(2,'0')}` : `Dial ${Math.floor((selected-currentModel().keys-1)/3)+1}`;
-  $('#action-editor').innerHTML = `<div class="editor-mode" role="group" aria-label="키 설정 방식"><button data-editor-mode="functions" aria-pressed="${editorMode==='functions'}">기능 선택</button><button data-editor-mode="manual" aria-pressed="${editorMode==='manual'}">직접 입력</button></div><section id="function-picker" ${editorMode==='functions'?'':'hidden'}><div class="function-current"><button class="quiet key-disable" data-action="disable-action" title="키 할당 삭제 · 사용 안 함" aria-label="키 할당 삭제">${icon('trash')}</button><strong>${escapeHTML(featureName(action)||getLabel(action))}</strong><span>${escapeHTML(actionLabel(action))}</span></div><div class="function-search"><label class="shortcut-app-field"><span>지원 앱</span><select id="shortcut-application" aria-label="지원 앱">${applicationOptions()}</select></label><label class="sr-only" for="function-search">기능 검색</label><input id="function-search" type="search" placeholder="기능 이름으로 검색" value="${escapeHTML(functionQuery)}" autocomplete="off"><label class="sr-only" for="function-group">기능 그룹</label><select id="function-group"><option value="">모든 기능</option>${(functionCatalog?.groups||[]).map(group=>`<option value="${escapeHTML(group.id)}">${escapeHTML(group.name)}</option>`).join('')}</select></div><div id="function-list" class="function-list"></div><div id="function-setup" class="function-setup"></div></section><section id="manual-editor" ${editorMode==='manual'?'':'hidden'}><label class="field"><span class="field-label">동작 종류</span><select id="action-type"><option value="preserve">원래 동작 유지</option><option value="key">키 / 조합키</option><option value="macro">순차 매크로</option><option value="media">미디어</option><option value="mouse">마우스</option><option value="disabled">사용 안 함</option></select></label><div id="action-fields"></div><div class="error-text" id="editor-error" role="alert"></div><div class="action-preview"><h3>장치의 현재 동작</h3><div class="preview-label">${escapeHTML(currentLabel(snapshotAction()))}</div>${boardValue(selected).changed?`<span class="draft-indicator">편집: ${escapeHTML(getLabel(action))}</span>`:''}</div></section><button class="quiet key-disable-manual" data-action="disable-action" ${editorMode==='manual'?'':'hidden'}>${icon('trash')}키 할당 삭제 · 사용 안 함</button>${keyLightingHTML(profile,layer,selected)}`;
+  $('#action-editor').innerHTML = `<div class="editor-mode" role="group" aria-label="키 설정 방식"><button data-editor-mode="functions" aria-pressed="${editorMode==='functions'}">기능 선택</button><button data-editor-mode="manual" aria-pressed="${editorMode==='manual'}">직접 입력</button></div><section id="function-picker" ${editorMode==='functions'?'':'hidden'}><div class="function-current"><button class="quiet key-disable" data-action="disable-action" title="키 할당 삭제 · 사용 안 함" aria-label="키 할당 삭제">${icon('trash')}</button><strong ${action.label?'data-i18n-preserve':''}>${escapeHTML(featureName(action)||getLabel(action))}</strong><span>${escapeHTML(actionLabel(action))}</span></div><div class="function-search"><label class="shortcut-app-field"><span>지원 앱</span><select id="shortcut-application" aria-label="지원 앱">${applicationOptions()}</select></label><label class="sr-only" for="function-search">기능 검색</label><input id="function-search" type="search" placeholder="기능 이름으로 검색" value="${escapeHTML(functionQuery)}" autocomplete="off"><label class="sr-only" for="function-group">기능 그룹</label><select id="function-group"><option value="">모든 기능</option>${(functionCatalog?.groups||[]).map(group=>`<option value="${escapeHTML(group.id)}">${escapeHTML(group.name)}</option>`).join('')}</select></div><div id="function-list" class="function-list"></div><div id="function-setup" class="function-setup"></div></section><section id="manual-editor" ${editorMode==='manual'?'':'hidden'}><label class="field"><span class="field-label">동작 종류</span><select id="action-type"><option value="preserve">원래 동작 유지</option><option value="key">키 / 조합키</option><option value="macro">순차 매크로</option><option value="media">미디어</option><option value="mouse">마우스</option><option value="disabled">사용 안 함</option></select></label><div id="action-fields"></div><div class="error-text" id="editor-error" role="alert"></div><div class="action-preview"><h3>장치의 현재 동작</h3><div class="preview-label" ${snapshotAction()?.label?'data-i18n-preserve':''}>${escapeHTML(currentLabel(snapshotAction()))}</div>${boardValue(selected).changed?`<span class="draft-indicator">편집: <span ${action.label?'data-i18n-preserve':''}>${escapeHTML(getLabel(action))}</span></span>`:''}</div></section><button class="quiet key-disable-manual" data-action="disable-action" ${editorMode==='manual'?'':'hidden'}>${icon('trash')}키 할당 삭제 · 사용 안 함</button>${keyLightingHTML(profile,layer,selected)}`;
   $('#shortcut-application').value=shortcutApplicationId==='system'?'':shortcutApplicationId;
   document.querySelectorAll('[data-key-led-color]').forEach(button=>{if(button.dataset.keyLedColor!=='preserve')button.style.backgroundColor=button.dataset.keyLedColor;});
   $('#action-type').value = action.type;
@@ -343,7 +348,7 @@ async function persistBackup(backup) {
 function renderBackups() {
   try {
     const list = backups();
-    $('#backup-list').innerHTML = list.length ? list.map(item => `<div class="backup-row"><strong>${escapeHTML(item.deviceName)}</strong><p>${escapeHTML(dateLabel(item.savedAt))} · 적용 전 키·다이얼 동작</p><div class="backup-buttons"><button class="small" data-export-backup="${escapeHTML(item.id)}">파일 내보내기</button><button class="small" data-restore-backup="${escapeHTML(item.id)}" ${!device?.compatible || busy ? 'disabled' : ''}>장치에 복원</button><button class="quiet small danger" data-delete-backup="${escapeHTML(item.id)}" aria-label="${escapeHTML(dateLabel(item.savedAt))} 백업 삭제">삭제</button></div></div>`).join('') : '<p class="backup-empty">아직 백업이 없습니다. 키보드에 처음 적용할 때 키·다이얼 동작을 자동 보관합니다.</p>';
+    $('#backup-list').innerHTML = list.length ? list.map(item => `<div class="backup-row"><strong data-i18n-preserve>${escapeHTML(item.deviceName)}</strong><p>${escapeHTML(dateLabel(item.savedAt))} · 적용 전 키·다이얼 동작</p><div class="backup-buttons"><button class="small" data-export-backup="${escapeHTML(item.id)}">파일 내보내기</button><button class="small" data-restore-backup="${escapeHTML(item.id)}" ${!device?.compatible || busy ? 'disabled' : ''}>장치에 복원</button><button class="quiet small danger" data-delete-backup="${escapeHTML(item.id)}" aria-label="${escapeHTML(dateLabel(item.savedAt))} 백업 삭제">삭제</button></div></div>`).join('') : '<p class="backup-empty">아직 백업이 없습니다. 키보드에 처음 적용할 때 키·다이얼 동작을 자동 보관합니다.</p>';
   } catch (error) { $('#backup-list').textContent = `백업을 읽지 못했습니다: ${explain(error)}`; }
 }
 function progress(message) { const text=typeof message==='string'?message:message?.message || JSON.stringify(message);$('#device-message').textContent=text;if(text)diagnostic(/실패|오류/.test(text)?'error':'info',text); }
@@ -390,7 +395,7 @@ function openTool(id) {
   if(!$(`#${id}`).open)$(`#${id}`).showModal();
 }
 function updateDeviceUI() {
-  const connected = Boolean(device);
+  const connected = Boolean(device && pendingOffline?.target !== device);
   document.querySelectorAll('[data-rotate]').forEach(button=>{button.disabled=busy || (button.dataset.rotate==='reset' && !(profile.rotation||0));});
   $('#header-device-dot').classList.toggle('connected',connected);
   $('#header-device-label').textContent = connected ? '키보드 연결됨' : '장치 연결';
@@ -401,14 +406,15 @@ function updateDeviceUI() {
   $('[data-action="connect"]').innerHTML = `${icon('usb')}<span>${busy ? '처리 중…' : connected ? '연결 해제' : '키보드 연결'}</span>`;
   $('[data-action="connect"]').disabled = busy || ($('#transport-select').value === 'webhid' && !('hid' in navigator));
   $('#transport-select').disabled = busy || connected;
-  $('#led-open-button').disabled = busy || device?.transport !== 'companion';
+  $('#led-open-button').disabled = busy || !connected || device?.transport !== 'companion';
   $('#led-open-button').title = device?.transport === 'companion' ? '수동 상태·LED' : '보조앱 연결에서 사용';
   const modelMismatch = device && device.modelId !== profile.modelId;
-  $('#apply-button').disabled = busy || !device?.compatible || modelMismatch;
-  $('#read-device').disabled = busy || !device?.compatible;
+  $('#apply-button').disabled = busy || !connected || !device?.compatible || modelMismatch;
+  $('#read-device').disabled = busy || !connected || !device?.compatible;
   $('#apply-button').innerHTML = `${icon('usb')}${busy ? '처리 중…' : '장치에 적용'}`;
   $('#device-model-name').textContent = connected ? (device.modelId ? getModel(device.modelId).name : device.name || 'Mini Keyboard') : '키보드';
-  if ($('#transport-select').value === 'webhid' && !('hid' in navigator)) $('#device-description').textContent = '장치 연결: 데스크톱 Chrome / Edge 필요';
+  if (pendingOffline?.target === device) $('#device-description').textContent = pendingOffline.message;
+  else if ($('#transport-select').value === 'webhid' && !('hid' in navigator)) $('#device-description').textContent = '장치 연결: 데스크톱 Chrome / Edge 필요';
   else if (connected && !device.compatible) $('#device-description').textContent = device.compatibilityReason || `연결한 장치의 기록 방식을 확인하지 못했습니다. 식별값: ${(device.identity || []).map(value => `0x${value.toString(16).padStart(2,'0')}`).join(' ')}. 키맵은 계속 편집할 수 있습니다.`;
   else if (modelMismatch) $('#device-description').textContent = `모델 다름: 장치 ${getModel(device.modelId).name} / 키맵 ${currentModel().name} · 설정 읽기로 전환`;
   else if (connected && device.verified === false) $('#device-description').textContent = `실기 미검증 · ${deviceSnapshot?'동작 읽음':'연결됨'}`;
@@ -422,7 +428,7 @@ async function withDeviceWork(work) {
   busy = true; updateDeviceUI();
   try { await device.ensureConnected?.(); await work(); }
   catch (error) { deviceSnapshot = null; renderBoard(); renderEditor(); progress(explain(error)); toast(explain(error),true); }
-  finally { busy = false; updateDeviceUI(); renderBackups(); }
+  finally { busy = false; invalidatePendingConnection(); updateDeviceUI(); renderBackups(); }
 }
 async function connect() {
   if (busy) return;
@@ -432,14 +438,14 @@ async function connect() {
     finally { $('#lighting-dialog').close(); ledWriteAllowed=false; device = null; deviceSnapshot = null; renderBoard(); renderEditor(); updateDeviceUI(); }
     return;
   }
-  busy = true; updateDeviceUI();
+  connecting = true; pendingOffline = null; busy = true; updateDeviceUI();
   try {
     device = await connectDevice({transport:$('#transport-select').value});
     if (device.compatible) { progress('동작 읽는 중…'); await refreshSnapshot(); progress(''); }
     else progress(device.compatibilityReason || '지원하지 않는 장치');
   }
   catch (error) { toast(`연결하지 못했습니다: ${explain(error)}`,true); progress(explain(error)); }
-  finally { busy = false; updateDeviceUI(); }
+  finally { connecting = false; busy = false; invalidatePendingConnection(); updateDeviceUI(); }
 }
 
 document.addEventListener('click', async event => {
@@ -772,7 +778,37 @@ $('#presets-dialog').addEventListener('click', async event => {
   } catch (error) { $('#catalog-result').textContent = explain(error); toast(explain(error),true); }
 });
 
-if ('hid' in navigator) navigator.hid.addEventListener('disconnect', event => { if (device && (!device.hidDevice || event.device === device.hidDevice)) { device = null; deviceSnapshot = null; $('#lighting-dialog').close(); renderBoard(); renderEditor(); updateDeviceUI(); progress('USB 연결이 끊어졌습니다. 케이블을 확인한 뒤 다시 연결하세요.'); } });
+function invalidatePendingConnection() {
+  if (!pendingOffline || busy) return;
+  const offline = pendingOffline;
+  pendingOffline = null;
+  if (device !== offline.target) return;
+  device = null; deviceSnapshot = null; ledWriteAllowed = false;
+  $('#lighting-dialog').close(); renderBoard(); renderEditor(); updateDeviceUI(); progress(offline.message);
+}
+function markDeviceOffline(target, state = 'disconnected') {
+  if (!target || device !== target) return;
+  const message = state === 'unknown' ? '장치 연결 상태를 확인할 수 없습니다. USB 연결을 확인한 뒤 다시 연결하세요.' : 'USB 연결이 끊어졌습니다. 케이블을 확인한 뒤 다시 연결하세요.';
+  // Presence notifications must never close the handle or write to the device.
+  if (target.transport === 'companion' && target.hidDevice) target.hidDevice.opened = false;
+  pendingOffline = {target,message}; deviceSnapshot = null;
+  renderBoard(); renderEditor(); updateDeviceUI(); progress(message);
+  invalidatePendingConnection();
+}
+function receiveConnectionStatus(status) {
+  if (!status || typeof status.connected !== 'boolean') return;
+  if (Number.isSafeInteger(status.sequence)) {
+    if (status.sequence < presenceRevision) return;
+    presenceRevision = status.sequence;
+  }
+  // During initialization, an earlier status may still describe the old handle.
+  // A successful connect reads the device; subsequent presence polls verify it.
+  if (status.connected || connecting || device?.transport !== 'companion') return;
+  markDeviceOffline(device,status.connectionState);
+}
+if ('hid' in navigator) navigator.hid.addEventListener('disconnect', event => {
+  if (device && (!device.hidDevice || event.device === device.hidDevice)) markDeviceOffline(device);
+});
 function lightingRules() {
   return ledStates.map(item=>({source:'manual',state:item.state,layer:Number($(`[data-led-layer="${item.state}"]`).value),mode:1,color:$(`[data-led-color="${item.state}"]`).value}));
 }
@@ -790,7 +826,7 @@ async function openLighting() {
   $('#lighting-enabled').checked=false;
   $('#lighting-enabled').indeterminate=false;
   $('#lighting-enabled').disabled=true;
-  $('#lighting-capability').textContent='연결 확인 중';
+  lightingChecking=true;$('#lighting-capability').textContent='연결 확인 중';
   $('#lighting-error').textContent='';
   $('#lighting-preview').hidden=true;
   $('#lighting-readings').replaceChildren();
@@ -805,7 +841,7 @@ async function openLighting() {
     ledWriteAllowed=status.capabilities?.lightingWrite===true||status.lightingWrite===true;
     $('#lighting-enabled').checked=status.rulesEnabled===true;
     $('#lighting-enabled').disabled=!ledWriteAllowed;
-    $('#lighting-capability').textContent=status.rulesEnabled?'상태 규칙 사용 중':ledWriteAllowed?'LED 설정 가능':'읽기 전용';
+    lightingChecking=false;$('#lighting-capability').textContent=status.rulesEnabled?'상태 규칙 사용 중':ledWriteAllowed?'LED 설정 가능':'읽기 전용';
   });
   await directLighting.refresh();
 }
@@ -815,8 +851,8 @@ async function lightingWork(work,{propagate=false}={}) {
   $('#lighting-error').textContent='';
   document.querySelectorAll('#lighting-dialog button,#lighting-dialog input,#lighting-dialog select').forEach(control=>control.disabled=true);
   try{await device?.ensureConnected?.();await work();}
-  catch(error){$('#lighting-preview').hidden=true;$('#lighting-error').textContent=explain(error);if($('#lighting-capability').textContent==='연결 확인 중'){$('#lighting-enabled').indeterminate=true;$('#lighting-capability').textContent='설정 확인 실패';}if(propagate)throw error;}
-  finally{busy=false;updateDeviceUI();document.querySelectorAll('#lighting-dialog button,#lighting-dialog input,#lighting-dialog select').forEach(control=>control.disabled=false);$('#lighting-enabled').disabled=!ledWriteAllowed;}
+  catch(error){$('#lighting-preview').hidden=true;$('#lighting-error').textContent=explain(error);if(lightingChecking){lightingChecking=false;$('#lighting-enabled').indeterminate=true;$('#lighting-capability').textContent='설정 확인 실패';}if(propagate)throw error;}
+  finally{busy=false;invalidatePendingConnection();updateDeviceUI();document.querySelectorAll('#lighting-dialog button,#lighting-dialog input,#lighting-dialog select').forEach(control=>control.disabled=false);$('#lighting-enabled').disabled=!ledWriteAllowed;}
 }
 async function syncLightingEnabled(enabled) {
   try {
@@ -869,11 +905,23 @@ window.addEventListener('hashchange', () => {
 window.addEventListener('beforeunload', () => { if (draftTimer) persistDraft(); });
 const directLighting=initLightingEditor({container:$('#direct-lighting-editor'),companionCall,getDevice:()=>device,getBusy:()=>busy,runExclusive:work=>lightingWork(work,{propagate:true}),onApplied:async()=>renderLightingReadings(await companionCall('readLighting'))});
 const inputDebug=initInputDebug({getContext:()=>({profile,layer,selected}),readSnapshot:async()=>{if(busy)throw Error('장치 작업 중');let result=null;await withDeviceWork(async()=>{await refreshSnapshot();result=deviceSnapshot;});return result;},download});
+const localizer=createDOMLocalizer(document.body,'ko');
+const languageController=await createLanguageController({onChange:locale=>{
+  $('#language-select').value=locale;localizer.setLocale(locale);
+}});
+$('#language-select').addEventListener('change',async event=>{
+  const previous=languageController.locale;event.target.disabled=true;
+  try{await languageController.setLocale(event.target.value);}
+  catch{event.target.value=previous;toast('언어 설정을 저장하지 못했습니다. 다시 선택하세요.',true);}
+  finally{event.target.disabled=false;}
+});
+window.addEventListener('beforeunload',()=>{localizer.dispose();languageController.dispose();});
 fullRender();
 if (sharedAtStartup) { persistDraft(); if (!draftFailed) history.replaceState(null,'',location.pathname+location.search); }
 new ResizeObserver(()=>layoutBoard()).observe($('.hardware-stage'));
 if (!isSecureContext) { notice = '장치 연결에는 HTTPS 또는 localhost가 필요합니다. 로컬 서버에서 이 페이지를 열어 주세요.'; $('#session-notice').textContent = notice; $('#session-notice').hidden = false; }
 if(globalThis.miniKeyboardDesktop?.version===1){
+  miniKeyboardDesktop.onConnectionStatus?.(receiveConnectionStatus);
   $('#transport-select').value='companion';$('.transport-field').hidden=true;updateDeviceUI();
   miniKeyboardDesktop.onAction?.(action=>{
     if(!isAppAction(action))return;

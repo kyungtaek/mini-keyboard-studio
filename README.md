@@ -1,113 +1,38 @@
 # Mini Keyboard Studio
 
-Mini Keyboard 앱 없이 키·다이얼 설정을 만들고 USB 키보드에 적용하는 로컬 앱입니다. 사용자가 제공한 [디자인](design.md)을 바탕으로 다크 UI를 구성했습니다.
+[English](README.md) · [한국어](README.ko.md) · [日本語](README.ja.md) · [Español](README.es.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md)
 
-## macOS 앱
+Make a small keyboard your own. Mini Keyboard Studio is a local macOS app for editing keys, dials and lighting, then applying your keymap over USB.
 
-Apple Silicon용 **Mini Keyboard Studio 0.4.0**을 `/Users/kent/Applications/Mini Keyboard Studio.app`에 설치했습니다. 웹 편집기·HID 실행 파일·샘플 6종을 한 앱에 포함합니다. 별도 Node/Python 설치나 서버 실행 없이 앱을 엽니다. 배포 파일은 `dist/Mini Keyboard Studio-0.4.0-arm64-mac.zip`입니다.
+**[Download for macOS Apple Silicon](https://github.com/kyungtaek/mini-keyboard-studio/releases/latest)** · [Development guide](docs/development.md)
 
-- 창을 닫으면 메뉴 막대에서 계속 실행됩니다. **종료** 또는 Cmd+Q는 HID 복구와 실행 파일 종료를 기다립니다.
-- 메뉴 막대 아이콘 또는 앱 메뉴에서 **설정 열기**, **로그인 시 자동 실행**, **데이터 폴더 열기**, **Codex 연동용 로컬 API**를 사용할 수 있습니다.
-- 설치된 앱의 로그인 자동 실행 등록은 `enabled`로 확인했습니다. 실제 로그아웃·재로그인 테스트는 수행하지 않았습니다.
-- 앱 데이터는 `~/Library/Application Support/Mini Keyboard Studio/`에 저장합니다. 키맵은 이 폴더의 앱 저장소, 원본 HID 백업은 `companion-backups/`에 보관합니다. 기존 브라우저 키맵과 백업은 JSON 내보내기·가져오기로 이동할 수 있습니다.
-- 로컬 API를 켜면 `http://localhost:4173/api/companion`에서 앱과 동일한 HID 소유자를 사용합니다. loopback/Host/Origin/세션 토큰 검증을 유지합니다. 일반 설정 UI는 이 포트에 의존하지 않습니다.
-- 앱 공유 링크는 `mini-keyboard://studio/#keymap=...`입니다. 링크 복사와 페이로드 검증은 확인했으며, 외부 프로그램에서 링크를 눌러 앱을 여는 동작은 자동화 URL 정책 제한으로 미검증입니다. JSON 공유도 지원합니다.
+Available in English, Korean, Japanese, Spanish, Simplified Chinese and Traditional Chinese. Change the language from **Files & sharing** or the app menu.
 
-현재 빌드는 로컬 사용용 ad-hoc 서명입니다. Developer ID 서명·Apple 공증을 받은 외부 배포 빌드와 구분합니다. [패키징 검증 기록](docs/electron-verification.md)을 참고하세요.
+![Mini Keyboard Studio keymap editor](docs/images/studio-editor.jpg)
 
-## 웹 개발 실행
+## What you can do
 
-```sh
-./scripts/start.sh
-```
+- **Build three layers.** Assign keys, modifier combinations, macros, media controls and mouse actions to keys and dials.
+- **Find useful shortcuts.** Browse references for VS Code, Codex, Claude, system controls, Forza Horizon 4 and Modern Warfare 4. Keep a readable function name on each assignment.
+- **Choose your orientation.** Rotate the layout to match how the keyboard sits on your desk.
+- **Set key lighting.** Choose from 15 colors plus **Off**, with a shared LED mode for each layer.
+- **Keep and share keymaps.** Save locally, import or export JSON, and share a link containing the profile. Editing and local files work offline.
+- **Apply with feedback.** Back up key assignments before writing, verify stored values by reading them back, and inspect key input with built-in diagnostics.
+- **Stay in the menu bar.** Close the window and reopen the editor from the menu bar when needed.
 
-[http://localhost:4173](http://localhost:4173)을 엽니다. 브라우저 직접 연결은 데스크톱 Chrome/Edge의 WebHID를 사용합니다. 보조앱 연결은 이 저장소의 Python 런타임을 통해 장치를 제어합니다. 웹 파일은 정적이며 빌드·계정·클라우드 서버가 필요하지 않습니다.
+![Per-key lighting palette and layer mode](docs/images/studio-led.jpg)
 
-## 사용
+## Get started
 
-1. USB 데이터 케이블로 키보드를 연결하고 **키보드 연결**을 누릅니다. 최초 WebHID 연결은 브라우저 장치 선택 창에서 허용합니다.
-2. 키보드 그림에 현재 키 값이 표시됩니다. 키나 다이얼을 선택해 동작을 편집합니다. 작은 점은 아직 적용하지 않은 변경입니다.
-3. **저장**으로 로컬 보관함에, **내보내기**로 JSON 파일에 저장합니다. **공유** 링크는 키맵을 URL fragment에 담습니다. 공개 게시·업로드는 하지 않습니다.
-4. **적용** 한 번으로 모든 키 동작을 백업하고 변경분만 기록한 뒤 재읽기로 검증합니다. 실패하면 원본 복원을 시도하고 그 결과를 표시합니다.
+1. Download the Apple Silicon DMG from [Releases](https://github.com/kyungtaek/mini-keyboard-studio/releases/latest), move the app to **Applications**, and open it.
+2. Connect the keyboard with a USB data cable and choose **Connect keyboard**.
+3. Start with a built-in sample or a new keymap. Select a key or dial, assign a function, and optionally set key colors and the layer LED mode.
+4. Save your keymap and choose **Apply to device** when ready. Opening a file or changing the selected app reference does not apply it automatically.
 
-방향은 **왼쪽 / 오른쪽 / 초기화**로 조절합니다. 변경 후 **화면 방향만 변경**하거나 **키 재배치·적용**을 선택합니다. 후자는 세 레이어의 키를 기존 화면 위치에 맞춰 재배정하고 백업·기록·재읽기로 확인합니다. 이 작업에서는 모든 노브 기록을 제외합니다. 현재 동작을 알 수 없거나 직사각형 키패드의 행·열이 맞지 않는 경우 화면 회전만 허용합니다. 키맵과 장치 모델이 다르면 적용을 막습니다. 기존 v1~v3 키맵은 v4로 변환해 읽습니다.
+The optional GitHub keymap catalog uses GitHub authentication. Built-in samples and local keymaps do not require a GitHub account. Game shortcuts are suggested bindings; match them to your in-game settings.
 
-데스크톱 작업 화면은 창 높이에 맞춰 키보드를 조절합니다. 왼쪽 **파일·공유**(⌘O)에서 JSON 열기·내보내기·공유를, 하단 연결 상태 버튼의 **장치 관리**(⌘⇧D)에서 연결·해제·설정 읽기·백업·상태·LED를 엽니다. 왼쪽은 내 키맵과 카탈로그, 하단은 **장치에 적용**입니다. 새 키맵은 **내 키맵**의 + 또는 ⌘N, 저장은 ⌘S, 카탈로그는 ⌘⇧K입니다. macOS 메뉴 막대도 **파일 / 편집 / 키맵 / 장치 / 보기**로 구분합니다. 작은 창과 모바일은 세로로 이어서 표시합니다.
+## Device support
 
-파일 가져오기와 카탈로그 열기는 현재 편집 중인 키맵을 보관하고 새 ID로 엽니다. 키맵 JSON을 여는 동작만으로 장치에 기록하지 않습니다.
+The current verified device is the **16-key, 3-dial Mini Keyboard**, USB **514C:8850**, with the tested firmware. Other model layouts are available as candidates; they have not all been tested on physical hardware.
 
-## GitHub 키맵 카탈로그
-
-앱 소스는 [mini-keyboard-studio](https://github.com/kyungtaek/mini-keyboard-studio), 공유 키맵은 [mini-keyboard-keymap-catalog](https://github.com/kyungtaek/mini-keyboard-keymap-catalog) 비공개 저장소에서 관리합니다.
-
-왼쪽 **키맵 카탈로그**에서 목록을 검색하고 **편집기로 열기** 또는 **다운로드·적용**을 선택합니다. 편집기로 열면 현재 키맵을 보관하고 다운로드한 키맵에 새 ID를 부여합니다. 적용은 연결 장치 모델 확인, 전체 원본 백업, 변경 기록, 재읽기 검증을 수행합니다. 장치가 없거나 모델이 다르면 적용 버튼이 비활성화됩니다.
-
-- 기존 `gh auth login` 인증을 자동으로 사용합니다. GitHub CLI가 없는 Mac에서는 카탈로그의 **GitHub 연결**에서 해당 비공개 저장소에 **Contents: read-only** 권한을 가진 fine-grained 토큰을 등록합니다. 토큰은 Electron 메인 프로세스에서만 사용하고 macOS 시스템 암호화로 앱 데이터 폴더에 저장합니다.
-- 목록과 파일을 동일한 Git 커밋에서 받아 SHA-256과 키맵 형식을 검증합니다. 네트워크 실패 시 마지막 검증 목록과 이미 다운로드한 파일을 사용할 수 있습니다. 처음 받는 파일은 온라인 연결이 필요합니다.
-- 카탈로그는 자동 적용하지 않습니다. 새 버전은 **새로고침**으로 확인하고 사용자가 적용합니다. JSON 데이터만 읽으며 실행 코드는 받지 않습니다.
-- 카탈로그 저장소의 README대로 JSON을 추가하고 manifest 생성·검증 후 push하면 앱에 표시됩니다.
-- **기본 샘플** 탭은 인터넷과 인증 없이 사용합니다. VS Code Mac, Codex Mac, Claude Mac, 시스템 탐색·미디어, Forza Horizon 4 PC, Modern Warfare 4 PC의 6종이며 각각 16키·3다이얼·3레이어를 포함합니다. 게임 키맵은 공식 기본 키가 아닌 사용자 지정 바인딩 제안입니다.
-- GitHub 카탈로그는 Electron 앱에서 사용합니다. 일반 브라우저 모드는 기본 샘플을 제공합니다.
-
-장치 백업·serial·실험 원본이 포함된 `evidence/`, `device-backups/`, `companion/backups/`와 빌드 산출물은 Git에 올리지 않습니다. 일부 연구 문서는 로컬에만 보관하는 증거 파일을 참조합니다.
-
-## 보조앱과 상태·LED
-
-이 환경에는 `.venv`와 `hidapi`가 준비되어 있습니다. 새 환경에서는 다음을 한 번 실행합니다.
-
-```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install -r companion/requirements.txt
-```
-
-웹 개발 모드에서 연결 방식을 **보조앱**으로 선택하면 로컬 HID 프로세스를 시작합니다. 패키징된 Electron 앱은 동봉한 실행 파일을 자동으로 연결하며, 위의 `.venv` 개발 환경을 사용하지 않습니다.
-
-**상태·LED**에서 수동 상태 이벤트를 시험합니다. 기본은 미리보기이며, 장치 LED 사용을 켠 경우에만 기록합니다. LED 변경 전 원본 3개 레이어를 디스크에 저장하고 변경·복원을 재읽기로 검증합니다. 키맵 기록 중 상태 이벤트는 대기시키고 마지막 이벤트를 처리합니다. 반복 애니메이션은 실행하지 않습니다.
-
-중단된 키 기록은 소유자의 취소 또는 120초 동안 통신이 없는 세션의 재연결로 원본 복구를 시도합니다. 실패한 LED 복원은 장치 serial에 연결한 복구 기록으로 재개합니다. 강제 프로세스 종료나 전원 차단 시 키 자동 복구는 보장하지 않으며, 웹의 **장치 백업**에서 기록 전 백업을 복원해야 합니다.
-
-현재 제공하는 것은 공통 상태 인터페이스와 HID 제어입니다. Codex·Claude·VS Code 등 각 앱의 내부 상태 수집기와 macOS 활성 앱 관찰기는 구현하지 않았습니다. 각 어댑터는 [상태 인터페이스](docs/companion-interface.md)에 맞춰 별도 트랙으로 연결할 수 있습니다. [기능 검토](docs/capability-review.md)에 자동 전환과 LED의 제약을 정리했습니다.
-
-## 호환성·검증 범위
-
-- 실제 장치: `514C:8850`, 식별값 `10/03/0B`, 16키·3다이얼. 전체 75개 키 동작 읽기, 웹 적용, 독립 재읽기, 원본 복원을 확인했습니다.
-- 8종 모델의 편집 배치·회전·파일 형식을 지원합니다. 새 FD65 계열은 모델 응답과 전체 레코드를 확인한 뒤 처리합니다. 다른 모델의 물리 키 순서와 실행 결과는 실기 미검증입니다.
-- 원본 앱의 후보 VID/PID를 검색하되 USB 식별자만으로 쓰기 코덱을 고르지 않습니다. 구형 프로토콜은 기록을 잠급니다. 임의 HID 장치·QMK/VIA 전체 호환을 의미하지 않습니다.
-- 키·다이얼 백업과 LED 백업은 별개입니다. 키 백업은 LED·펌웨어 전체 이미지가 아닙니다. 브라우저 API에는 USB serial이 노출되지 않아 웹 백업은 VID/PID·모델·완전한 레코드·해시를 검증하며 기기 고유 serial 일치까지 보장하지 않습니다.
-- 물리 키 누름에 의한 모든 조합·매크로·미디어·마우스 동작, LED 시각 효과, 전원 재연결 후 유지는 아직 확인하지 않은 항목입니다.
-
-[REA 및 통신 조사](docs/research.md), [다중 기기 프로토콜 조사](docs/device-compatibility-research.md), [샘플 단축키 출처](docs/shortcut-sources.md).
-
-## 테스트
-
-```sh
-npm test
-.venv/bin/python -m unittest discover -s tests -p 'test_companion.py'
-```
-
-소스의 단위 테스트와 실제 USB 검증 증거는 구분합니다. `device-backups/`, `companion/backups/`는 로컬에만 보관하며 웹 서버로 제공하지 않습니다. 공유 URL에는 키 입력이 포함되므로 암호나 비밀 텍스트를 매크로에 넣어 공유하지 마세요.
-
-## 앱 빌드
-
-macOS arm64에서 다음 순서로 빌드합니다.
-
-```sh
-npm install
-python3 -m venv .venv
-.venv/bin/python -m pip install -r companion/build-requirements.txt
-npm run package:mac
-```
-
-개발용 Electron 실행은 `npx install-electron`을 한 번 실행한 뒤 `npm run desktop`을 사용합니다. `desktop/`, 웹 자산과 동봉 HID 런타임만 패키징하며 개인 키맵·백업·조사 증거·개발 가상 환경은 포함하지 않습니다.
-
-## 진단 로그
-
-앱의 **로그 폴더 열기** 메뉴 또는 **파일·공유 → 진단 로그 폴더 열기**에서 `~/Library/Application Support/Mini Keyboard Studio/logs/studio.jsonl`을 확인합니다. 콘솔 메시지, 적용 단계, 레이어·동작 ID·불일치 바이트 위치, 복구 결과, 보조 프로세스 오류를 기록합니다. 파일당 2MiB, 최대 3개를 보관하며 토큰·serial·원시 키맵은 기록하지 않습니다. [로그 정책](docs/logging.md), [방향 및 저장 오류 수정](docs/rotation-write-fix.md)을 참고하세요.
-
-## 앱별 기능 선택
-
-키맵은 앱에 바인딩하지 않습니다. 오른쪽 **기능 선택 → 지원 앱**에서 시스템 기본·VS Code·Codex·Claude·게임 목록을 골라 기능을 검색하고 선택하면 현재 키 또는 노브에 단축키가 입력됩니다. 목록을 바꿔도 기존 키와 기능 이름은 유지됩니다. 휴지통 버튼으로 할당을 삭제해 **사용 안 함**으로 설정할 수 있습니다. **직접 입력**에서는 조합·매크로를 편집합니다. 키 패널 하단의 **키 LED**에서 16색 팔레트와 레이어 공통 모드 0~5를 편집하고, **장치에 적용**으로 키와 LED를 함께 저장·재읽기 검증합니다. 색상·모드 유지는 기존 장치 값을 보존합니다. 모드의 시각 효과 이름은 아직 실물 검증 전입니다. 기능 이름과 LED 편집값은 v4 JSON·공유 링크에 저장합니다. 앱 포커스 관찰과 자동 장치 적용은 사용하지 않습니다. [파일 형식과 동작](docs/function-editor.md)을 참고하세요.
-
-현재 실측 장치에서는 모드를 바꾼 뒤 USB 재연결 후에 조명 효과가 달라졌고, 같은 활성 모드에서 백업 색상 복원은 재연결 없이 반영됐습니다. 앱은 LED 저장·재읽기 확인과 실제 조명 효과를 구분하며, 모드 변경이 눈에 보이지 않을 때만 재연결을 안내합니다.
-
-LED 팔레트는 15색과 **꺼짐(검정)**으로 구성됩니다. 기존 진한 빨강이 들어간 파일도 계속 읽습니다. USB 재연결 후에는 장치 작업 전에 읽기 전용 연결 검사를 수행하고, 같은 시리얼·식별값의 장치만 다시 엽니다. 실패한 설정 쓰기는 자동 재전송하지 않습니다.
+LED modes are shown as **0–5** because their visual effects are not all verified. A mode change may need a USB reconnect to become visible; some color changes have been observed to update live. A successful readback confirms stored values, not every visible effect. Applying a keymap is manual; the app does not switch keymaps based on the focused application.

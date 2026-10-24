@@ -19,7 +19,8 @@ let calls=[];let callback;const diagnosticEvents=[];
 globalThis.miniKeyboardDesktop={log:async event=>diagnosticEvents.push(event),catalog:async(cmd,args)=>{calls.push([cmd,args]);return callback(cmd,args);}};
 const harness=`
 fullRender=()=>{};renderBoard=()=>{};renderEditor=()=>{};renderBackups=()=>{};refreshSnapshot=async()=>{await device.readAll()};
-return {chooseFunction,requestRotation,applyRotation,useCatalogEntry,preserveAndOpen,loadCatalog,renderCatalogCards,
+return {chooseFunction,requestRotation,applyRotation,useCatalogEntry,preserveAndOpen,loadCatalog,renderCatalogCards,receiveConnectionStatus,invalidatePendingConnection,
+ getDevice:()=>device,setConnecting:value=>connecting=value,
  setDevice:d=>device=d,setBusy:b=>busy=b,setProfile:p=>{profile=p;$('#profile-name').value=p.name},
  setCatalog:d=>catalogData=d,setFunctions:d=>functionCatalog=d,getProfile:()=>profile,getBusy:()=>busy};`;
 const ui=await new (Object.getPrototypeOf(async function(){}).constructor)(...Object.keys(deps),source+harness)(...Object.values(deps));
@@ -45,3 +46,18 @@ console.log('PASS: rotation applies all pad layers with knobs excluded from writ
 ui.setProfile(profileApi.createProfile('기능 편집'));ui.setDevice(null);ui.setFunctions({application:{id:'system'},groups:[{id:'navigation',name:'탐색',items:[{id:'enter',label:'선택 항목 열기',action:{type:'key',keys:['ENTER']},shortcut:'Enter'}]}],setupInstructions:[]});
 ui.chooseFunction('enter');assert.deepEqual(ui.getProfile().layers[0].actions[0],{type:'key',keys:['ENTER'],label:'선택 항목 열기'});assert.equal(Object.hasOwn(ui.getProfile(),'applicationId'),false);
 console.log('PASS: selecting a named function assigns its shortcut to the selected pad key without device writes.');
+
+// A real main-process presence event must clear the stale connected renderer.
+const attached=()=>({transport:'companion',compatible:true,modelId:incoming.modelId,name:'Fake USB',hidDevice:{opened:true},close(){throw Error('Presence may not close devices');}});
+let usb=attached();ui.setDevice(usb);ui.setBusy(false);
+ui.receiveConnectionStatus({connected:false,connectionState:'disconnected',connectionRevision:9,sequence:10});
+assert.equal(ui.getDevice(),null);assert.equal(usb.hidDevice.opened,false);assert.equal(node('#header-device-label').textContent,'장치 연결');assert.equal(node('#apply-button').disabled,true);
+usb=attached();ui.setDevice(usb);ui.setBusy(true);
+ui.receiveConnectionStatus({connected:false,connectionState:'unknown',connectionRevision:1,sequence:11});
+assert.equal(ui.getDevice(),usb);assert.equal(usb.hidDevice.opened,false);
+ui.setBusy(false);ui.invalidatePendingConnection();assert.equal(ui.getDevice(),null);
+usb=attached();ui.setDevice(usb);ui.receiveConnectionStatus({connected:false,connectionState:'disconnected',sequence:10});
+assert.equal(ui.getDevice(),usb,'stale main events cannot invalidate a newer connection');
+ui.setConnecting(true);ui.receiveConnectionStatus({connected:false,sequence:12});assert.equal(ui.getDevice(),usb);
+ui.setConnecting(false);ui.receiveConnectionStatus({connected:false,sequence:13});assert.equal(ui.getDevice(),null);
+console.log('PASS: unplug clears connected UI, busy operations defer invalidation, helper revision resets remain accepted, and stale/connect-time events are safe.');

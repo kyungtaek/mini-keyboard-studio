@@ -56,6 +56,8 @@ class Bridge:
         self.lighting_recovery_required = False
         self.handle_device = None
         self.device = None
+        self.connection_revision = 0
+        self.connection_signature = None
         self.lease = None
         self.key_backup_stored = False
         self.key_backup_path = None
@@ -292,8 +294,18 @@ class Bridge:
     def _restore_keys(self):
         # The durable file, rather than a mutable in-memory copy, is authoritative.
         saved = json.loads(Path(self.key_backup_path).read_text(encoding='utf-8'))
-        if saved.get('format') != 'companion-key-baseline' or saved.get('version') != 1 or saved.get('device') != self.device:
+        saved_device = saved.get('device')
+        # USB paths may change after removal. Every other saved descriptor field
+        # must still match; the reconnect also verifies serial and live identity.
+        without_path = lambda value: {key: item for key, item in value.items() if key != 'pathHex'}
+        if (saved.get('format') != 'companion-key-baseline' or saved.get('version') != 1
+                or not isinstance(saved_device, dict) or not isinstance(self.device, dict)
+                or without_path(saved_device) != without_path(self.device)):
             raise ValueError('key backup belongs to a different selected device')
+        if self.handle_device is None:
+            # Reached only by explicit owner abort or an expired recover. Status
+            # never enters this path, and the failed configuration is not replayed.
+            self._reopen_selected(self.device)
         count, encoders, supported = self._key_geometry()
         layers = saved.get('layers')
         if not supported or not isinstance(layers, list) or len(layers) != 3:
@@ -311,7 +323,14 @@ class Bridge:
                     raise ValueError('invalid saved key action/layer')
                 raw.append(record)
             parsed.append(raw)
-        response = self._wire(padded(251, 251, 251), 1)[0]
+        try:
+            response = self._wire(padded(251, 251, 251), 1)[0]
+        except Exception:
+            # A quick same-path replug can escape the enumeration poll. Only
+            # this read-only probe may be retried on a verified fresh handle;
+            # no configuration report is replayed on transport failure.
+            self._reopen_selected(self.device)
+            response = self._wire(padded(251, 251, 251), 1)[0]
         if response[:5] != [3, 251, *self.device['identity']]:
             raise ValueError('device identity changed before key rollback')
         for layer, records in enumerate(parsed, 1):
@@ -791,10 +810,51 @@ class Bridge:
         self.batch_session_baseline = None
         return {'restored': True, 'verified': True, 'rulesEnabled': False}
 
+    def _presence(self):
+        """Enumeration only: a retained USB handle does not prove attachment.
+
+        A missing or replaced path invalidates that handle until explicit open()
+        verifies the original device. Never restore, rebind, or release a lease here.
+        """
+        if self.device is None:
+            return False, None
+        try:
+            matches = [self._info(item) for item in self._enumerate()
+                       if self._info(item)['pathHex'] == self.device['pathHex']]
+            present = len(matches) == 1 and all(
+                matches[0][key] == self.device[key]
+                for key in ('vendorId', 'productId', 'serialNumber'))
+        except Exception as error:
+            return None, f'USB enumeration could not confirm the selected keyboard: {error}'
+        if present:
+            return True, None
+        error = 'Selected USB keyboard is absent or replaced; reconnect the original keyboard and open it again'
+        if self.handle_device is not None:
+            try:
+                self.handle_device.close()
+            except Exception:
+                # Losing an OS handle must not discard the recovery transaction.
+                pass
+            self.handle_device = None
+            self.applied.clear()
+            self.lighting_recovery_required |= bool(self.modified_layers)
+        return False, error
+
     def status(self):
-        writable = self._key_geometry()[2] if self.handle_device is not None else False
-        lighting = self.handle_device is not None and self._lighting_supported()
-        return {'connected': self.handle_device is not None, 'device': self.device,
+        present, error = self._presence()
+        connected = self.handle_device is not None and present is True
+        state = 'unknown' if present is None else 'connected' if connected else 'disconnected'
+        if present is True and not connected:
+            error = 'Selected USB keyboard requires an explicit open to verify its connection'
+        signature = (connected, present, state, error, json.dumps(self.device, sort_keys=True))
+        if signature != self.connection_signature:
+            self.connection_revision += 1
+            self.connection_signature = signature
+        writable = self._key_geometry()[2] if connected else False
+        lighting = connected and self._lighting_supported()
+        return {'connected': connected, 'device': self.device,
+                'devicePresent': present, 'connectionState': state,
+                'connectionRevision': self.connection_revision, 'connectionError': error,
                 'rulesEnabled': self.enabled, 'lastEvent': self.last_event, 'lastResult': self.last_result,
                 'leaseActive': self.lease is not None, 'keyBackupStored': self.key_backup_stored,
                 'leaseExpiresInMs': max(0, int((self.lease_deadline - self.clock()) * 1000)) if self.lease is not None else 0,

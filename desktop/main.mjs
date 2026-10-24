@@ -1,9 +1,11 @@
+import {connectionView} from './connection-status.mjs';
 import {app,BrowserWindow,Menu,Tray,nativeImage,protocol,ipcMain,dialog,shell,screen,session,clipboard,safeStorage} from 'electron';
 import {readFile,writeFile,mkdir,rename,realpath} from 'node:fs/promises';
 import path from 'node:path';
 import {createInputDebug} from './input-debug.mjs';
 import {createDiagnosticLogger,validateLogEvent} from './logging.mjs';
-import {appMenuGroups,isAppAction} from '../src/navigation.js';
+import {isAppAction} from '../src/navigation.js';
+import {SUPPORTED_LOCALES,normalizeLocale,validateLanguageInvocation,nativeText,nativeMenuTemplates} from './locale.mjs';
 import {CatalogService} from './catalog-service.mjs';
 import {CatalogAuth,validateCatalogInvocation} from './catalog-auth.mjs';
 import {createCompanionApi} from './local-api.mjs';
@@ -14,7 +16,7 @@ protocol.registerSchemesAsPrivileged([{scheme:'mini-keyboard',privileges:{standa
 app.setName('Mini Keyboard Studio');
 const single=app.requestSingleInstanceLock();
 if(!single){app.quit();}else{
- let window,tray,gateway,inputDebug,settings={},poll,apiServer,quitting=false,allowQuit=false,pendingLink=null,lastStatus={connected:false},lastError='',lastMenuKey='',refreshStatus=async()=>{};
+ let window,tray,gateway,inputDebug,settings={},poll,apiServer,quitting=false,allowQuit=false,pendingLink=null,lastStatus={connected:false},lastError='',lastMenuKey='',connectionSequence=0,refreshingStatus=false,refreshStatus=async()=>{};
  const root=app.getAppPath(),dataDir=app.getPath('userData'),settingsFile=path.join(dataDir,'desktop-settings.json');
  const logger=createDiagnosticLogger({directory:path.join(dataDir,'logs')});
  const log=(message,details={},level='error',component='main')=>logger.write({level,component,message,details}).catch(()=>{});
@@ -22,29 +24,27 @@ if(!single){app.quit();}else{
  process.on('uncaughtExceptionMonitor',error=>fatalLog('Uncaught exception',error));
  process.on('unhandledRejection',reason=>{fatalLog('Unhandled rejection',reason);throw reason instanceof Error?reason:Error('Unhandled promise rejection');});
  const openLogs=async()=>{await mkdir(logger.directory,{recursive:true,mode:0o700});const error=await shell.openPath(logger.directory);if(error)throw Error(error);return true;};
- const saveSettings=async()=>{const temp=settingsFile+'.tmp';await writeFile(temp,JSON.stringify(settings,null,2),{mode:0o600});await rename(temp,settingsFile);};
+ let settingsWrites=Promise.resolve();
+ const saveSettings=()=>{const snapshot=JSON.stringify(settings,null,2);const write=settingsWrites.catch(()=>{}).then(async()=>{const temp=settingsFile+'.tmp';await writeFile(temp,snapshot,{mode:0o600});await rename(temp,settingsFile);});settingsWrites=write;return write;};
+ const t=key=>nativeText(settings.language||'en',key);
+ let languageChanges=Promise.resolve();
+ const setLanguage=locale=>{validateLanguageInvocation([locale]);const change=languageChanges.catch(()=>{}).then(async()=>{if(locale===settings.language)return locale;const previous=settings.language;settings.language=locale;try{await saveSettings();}catch(error){settings.language=previous;throw error;}buildMenu();if(window&&!window.webContents.isDestroyed())window.webContents.send('mini:language-changed',locale);return locale;});languageChanges=change;return change;};
  const show=()=>{if(window){app.dock?.show();window.show();window.focus();}};
  const readLogin=()=>app.getLoginItemSettings();
  async function setLogin(enabled){app.setLoginItemSettings({openAtLogin:enabled});settings.launchAtLogin=enabled;await saveSettings();await recordStatus();buildMenu();}
- async function recordStatus(){await writeFile(path.join(dataDir,'desktop-status.json'),JSON.stringify({version:app.getVersion(),packaged:app.isPackaged,executable:app.getPath('exe'),helper:gateway?.python,backupDir:gateway?.backupDir,userData:dataDir,login:readLogin(),trayCreated:Boolean(tray),windowVisible:window?.isVisible(),apiEnabled:Boolean(apiServer),apiPort:apiServer?4173:null,connected:lastStatus.connected,capabilities:lastStatus.capabilities,error:lastError,updatedAt:new Date().toISOString()},null,2),{mode:0o600});}
+ async function recordStatus(){await writeFile(path.join(dataDir,'desktop-status.json'),JSON.stringify({version:app.getVersion(),packaged:app.isPackaged,executable:app.getPath('exe'),helper:gateway?.python,backupDir:gateway?.backupDir,userData:dataDir,language:settings.language,login:readLogin(),trayCreated:Boolean(tray),windowVisible:window?.isVisible(),apiEnabled:Boolean(apiServer),apiPort:apiServer?4173:null,connected:lastStatus.connected,capabilities:lastStatus.capabilities,error:lastError,updatedAt:new Date().toISOString()},null,2),{mode:0o600});}
  function sendAction(action){if(!isAppAction(action)||quitting)return;show();if(window&&!window.webContents.isLoading())window.webContents.send('mini:action',action);}
- function buildMenu(){if(!tray)return;const login=readLogin(),key=JSON.stringify([login.openAtLogin,login.status,lastStatus.connected,lastStatus.lightingRecoveryRequired,Boolean(apiServer)]);if(key===lastMenuKey)return;lastMenuKey=key;tray.setToolTip(`Mini Keyboard Studio · ${lastStatus.connected?'키보드 연결됨':'키보드 연결 전'}`);const items=[
-  {label:'Mini Keyboard Studio',enabled:false},
-  {label:lastStatus.connected?'● 키보드 연결됨':'○ 키보드 연결 전',enabled:false},
-  ...(lastStatus.lightingRecoveryRequired?[{label:'LED 원본 복구 필요 · 상태·LED에서 복원',enabled:false}]:[]),
-  {type:'separator'},{label:'설정 열기',click:show},{label:'데이터 폴더 열기',click:()=>shell.openPath(dataDir)},{label:'로그 폴더 열기',click:()=>openLogs().catch(reportError)},
-  {label:'로그인 시 자동 실행',type:'checkbox',checked:login.openAtLogin,enabled:app.isPackaged,click:item=>setLogin(item.checked).catch(reportError)},
-  ...(login.status==='requires-approval'?[{label:'로그인 항목 승인 필요',click:()=>shell.openExternal('x-apple.systempreferences:com.apple.LoginItems-Settings.extension')}]:[]),
-  {label:'Codex 연동용 로컬 API',type:'checkbox',checked:Boolean(apiServer),click:()=>toggleAPI(!apiServer).catch(reportError)},
-  {type:'separator'},{label:'종료',accelerator:'Command+Q',click:()=>app.quit()}
- ];tray.setContextMenu(Menu.buildFromTemplate(items));Menu.setApplicationMenu(Menu.buildFromTemplate([
-  {label:app.name,submenu:[{role:'about'},{type:'separator'},...items.slice(2,-2),{type:'separator'},{role:'hide'},{role:'hideOthers'},{role:'unhide'},{type:'separator'},items.at(-1)]},
-  ...appMenuGroups.slice(0,1).map(group=>({label:group.label,submenu:group.items.map(item=>({label:item.label,...(item.accelerator?{accelerator:item.accelerator}:{}),click:()=>sendAction(item.action)}))})),
-  {label:'편집',submenu:[{role:'undo'},{role:'redo'},{type:'separator'},{role:'cut'},{role:'copy'},{role:'paste'},{role:'selectAll'}]},
-  ...appMenuGroups.slice(1).map(group=>({label:group.label,submenu:group.items.map(item=>({label:item.label,...(item.accelerator?{accelerator:item.accelerator}:{}),click:()=>sendAction(item.action)}))})),
-  {label:'보기',submenu:[{role:'resetZoom'},{role:'zoomIn'},{role:'zoomOut'},{role:'togglefullscreen'}]}
- ]));}
- async function reportError(error){lastError=error.message;await log('Application error',{error});await recordStatus();dialog.showErrorBox('Mini Keyboard Studio',error.message);}
+ function buildMenu(){
+  if(!tray)return;
+  const login=readLogin(),key=JSON.stringify([settings.language,login.openAtLogin,login.status,lastStatus.connected,lastStatus.lightingRecoveryRequired,Boolean(apiServer)]);
+  if(key===lastMenuKey)return;lastMenuKey=key;
+  const menus=nativeMenuTemplates({locale:settings.language,appName:app.name,connected:lastStatus.connected,recoveryRequired:lastStatus.lightingRecoveryRequired,login,apiEnabled:Boolean(apiServer),packaged:app.isPackaged,handlers:{
+   show,data:()=>shell.openPath(dataDir),logs:()=>openLogs().catch(reportError),login:enabled=>setLogin(enabled).catch(reportError),
+   approval:()=>shell.openExternal('x-apple.systempreferences:com.apple.LoginItems-Settings.extension'),api:enabled=>toggleAPI(enabled).catch(reportError),quit:()=>app.quit(),action:sendAction,language:locale=>setLanguage(locale).catch(reportError)
+  }});
+  tray.setToolTip(menus.tooltip);tray.setContextMenu(Menu.buildFromTemplate(menus.tray));Menu.setApplicationMenu(Menu.buildFromTemplate(menus.application));
+ }
+ async function reportError(error){lastError=error.message;await log('Application error',{error});await recordStatus();dialog.showErrorBox(t('applicationError'),error.message);}
  async function toggleAPI(enabled){
   if(enabled&&!apiServer){
    const server=createCompanionApi(gateway);
@@ -61,9 +61,10 @@ if(!single){app.quit();}else{
   inputDebug?.pause('quit');
   if(allowQuit)return;event.preventDefault();if(quitting)return;quitting=true;clearInterval(poll);
   (async()=>{
+   try{await languageChanges;await settingsWrites;}catch(error){quitting=false;poll=setInterval(refreshStatus,1000);throw error;}
    if(apiServer){apiServer.close();apiServer=null;}
    try{await gateway?.stop();}
-   catch(error){await log(error.stack||error.message);const answer=await dialog.showMessageBox(window,{type:'warning',message:'장치 복구·종료를 확인하지 못했습니다.',detail:error.message+'\n원본 백업은 데이터 폴더에 보관되어 있습니다.',buttons:['앱으로 돌아가기','종료'],defaultId:0,cancelId:0});if(answer.response===0){quitting=false;poll=setInterval(refreshStatus,5000);if(settings.apiEnabled&&!apiServer)try{await toggleAPI(true);}catch(apiError){await log(apiError.message);}show();return;}}
+   catch(error){await log(error.stack||error.message);const answer=await dialog.showMessageBox(window,{type:'warning',message:t('quitWarning'),detail:error.message+'\n'+t('backupDetail'),buttons:[t('returnToApp'),t('quit')],defaultId:0,cancelId:0});if(answer.response===0){quitting=false;poll=setInterval(refreshStatus,1000);if(settings.apiEnabled&&!apiServer)try{await toggleAPI(true);}catch(apiError){await log(apiError.message);}show();return;}}
    await log('Application quitting',{},'info');await logger.flush();allowQuit=true;app.quit();
   })().catch(reportError);
  });
@@ -71,6 +72,7 @@ if(!single){app.quit();}else{
   await mkdir(dataDir,{recursive:true,mode:0o700});
   await log('Application starting',{version:app.getVersion(),packaged:app.isPackaged},'info');
   try{settings=JSON.parse(await readFile(settingsFile,'utf8'));}catch(error){if(error.code!=='ENOENT'){await log(`Settings read failed: ${error.message}`);throw error;}}
+  if(!SUPPORTED_LOCALES.includes(settings.language)){settings.language=normalizeLocale(app.getLocale());await saveSettings();}
   const catalogAuth=new CatalogAuth({dataDir,safeStorage});
   const catalog=new CatalogService({cacheDir:path.join(dataDir,'catalog'),getToken:()=>catalogAuth.getToken()});
   let authMutation=false;
@@ -100,22 +102,23 @@ if(!single){app.quit();}else{
   window.webContents.on('did-start-navigation',()=>inputDebug.pause('navigation'));
   window.webContents.on('render-process-gone',()=>inputDebug.pause('render-process-gone'));
   const validateSender=event=>validateInvocation({url:event.senderFrame?.url,mainFrame:event.senderFrame===window.webContents.mainFrame,senderId:event.sender.id},window.webContents.id,'status',{});
+  ipcMain.handle('mini:language',async(event,...args)=>{validateSender(event);const locale=validateLanguageInvocation(args);if(locale===null)return settings.language;if(quitting)throw Error(t('quitting'));return setLanguage(locale);});
   ipcMain.handle('mini:input-debug',(event,value)=>{validateSender(event);return inputDebug.set(value);});
   ipcMain.handle('mini:log',async(event,value)=>{validateSender(event);const safe=validateLogEvent(value);await logger.write(safe);return true;});
   ipcMain.handle('mini:open-logs',async event=>{validateSender(event);return openLogs();});
   ipcMain.handle('mini:companion',async(event,command,args)=>{
-   if(quitting)throw Error('앱이 종료 중입니다.');
+   if(quitting)throw Error(t('quitting'));
    validateInvocation({url:event.senderFrame?.url,mainFrame:event.senderFrame===window.webContents.mainFrame,senderId:event.sender.id},window.webContents.id,command,args);
    const result=await gateway.call(command,args);return result;
   });
   ipcMain.handle('mini:catalog',async(event,command,args={})=>{
-   if(quitting)throw Error('앱이 종료 중입니다.');
+   if(quitting)throw Error(t('quitting'));
    validateInvocation({url:event.senderFrame?.url,mainFrame:event.senderFrame===window.webContents.mainFrame,senderId:event.sender.id},window.webContents.id,'status',{});
    validateCatalogInvocation(command,args);
    if(command==='list')return catalog.list();
    if(command==='download')return catalog.download(args.id);
    if(command==='auth-status')return catalogAuth.status();
-   if(authMutation)throw Error('GitHub 인증을 변경 중입니다.');
+   if(authMutation)throw Error(t('authBusy'));
    authMutation=true;
    try{
     if(command==='clear-token')return await catalogAuth.clear();
@@ -127,7 +130,7 @@ if(!single){app.quit();}else{
   });
   ipcMain.handle('mini:copy-keymap',(event,url)=>{
    validateInvocation({url:event.senderFrame?.url,mainFrame:event.senderFrame===window.webContents.mainFrame,senderId:event.sender.id},window.webContents.id,'status',{});
-   if(!sharedKeymapURL(url))throw Error('잘못된 공유 링크입니다.');clipboard.writeText(url);return true;
+   if(!sharedKeymapURL(url))throw Error(t('invalidLink'));clipboard.writeText(url);return true;
   });
   window.on('close',event=>{if(!allowQuit){event.preventDefault();window.hide();app.dock?.hide();}});
   window.on('hide',()=>{recordStatus().catch(error=>log(error.message));});window.on('show',()=>{recordStatus().catch(error=>log(error.message));});
@@ -141,7 +144,8 @@ if(!single){app.quit();}else{
   if(settings.apiEnabled)try{await toggleAPI(true);}catch(error){await reportError(error);}
   await window.loadURL(APP_URL);
   if(!process.argv.includes('--hidden')&&!readLogin().wasOpenedAtLogin)show();else app.dock?.hide();
-  refreshStatus=async()=>{if(quitting)return;try{lastStatus=await gateway.call('status');lastError='';buildMenu();await recordStatus();}catch(error){lastError=error.message;await log(error.message);await recordStatus().catch(statusError=>log('Status file write failed',{code:statusError.code},'warn'));}};
-  await refreshStatus();poll=setInterval(refreshStatus,5000);
- }).catch(async error=>{await log('Application startup failed',{error});dialog.showErrorBox('앱을 시작하지 못했습니다',error.message);allowQuit=true;app.quit();});
+  const publishConnection=()=>{const view=connectionView(lastStatus);if(window&&!window.webContents.isDestroyed())window.webContents.send('mini:connection-status',{...view,sequence:++connectionSequence});};
+  refreshStatus=async()=>{if(quitting||refreshingStatus)return;refreshingStatus=true;try{lastStatus=await gateway.call('status');lastError='';publishConnection();buildMenu();await recordStatus();}catch(error){lastError=error.message;lastStatus={...lastStatus,connected:false,connectionState:'unknown',connectionError:error.message};publishConnection();buildMenu();await log(error.message);await recordStatus().catch(statusError=>log('Status file write failed',{code:statusError.code},'warn'));}finally{refreshingStatus=false;}};
+  await refreshStatus();poll=setInterval(refreshStatus,1000);
+ }).catch(async error=>{await log('Application startup failed',{error});dialog.showErrorBox(t('startupError'),error.message);allowQuit=true;app.quit();});
 }

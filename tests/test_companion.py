@@ -790,6 +790,219 @@ class CompanionTests(unittest.TestCase):
         bridge.handle({'command': 'restoreLighting'})
         self.assertEqual(transport.current.lighting[0][3:6], [1, 2, 3])
 
+    def test_status_uses_one_enumeration_without_hid_probe(self):
+        self.open()
+        enumerations = []
+        enumerate_devices = self.hid.enumerate
+        def enumerate_once():
+            enumerations.append(True)
+            return enumerate_devices()
+        def no_hid(*args):
+            raise AssertionError('status must not issue HID commands')
+        self.hid.enumerate = enumerate_once
+        self.hid.write = no_hid
+        self.hid.read = no_hid
+        self.assertTrue(self.bridge.status()['connected'])
+        self.assertEqual(len(enumerations), 1)
+
+    def test_status_detects_unplug_without_hid_and_requires_explicit_reopen(self):
+        transport = ReplugTransport()
+        bridge = Bridge(transport=transport, backup_dir=self.temp.name, delay=0)
+        original = bridge.handle({'command': 'open'}).copy()
+        first = bridge.status()
+        old = transport.current
+        writes = len(old.writes)
+        enumerate_devices = transport.enumerate
+        transport.enumerate = lambda: []
+        lost = bridge.status()
+        self.assertFalse(lost['connected'])
+        self.assertFalse(lost['devicePresent'])
+        self.assertEqual(lost['connectionState'], 'disconnected')
+        self.assertGreater(lost['connectionRevision'], first['connectionRevision'])
+        self.assertEqual(lost['device'], original)
+        self.assertEqual(len(old.writes), writes)
+        self.assertTrue(old.closed)
+        self.assertEqual(bridge.status()['connectionRevision'], lost['connectionRevision'])
+        transport.enumerate = enumerate_devices
+        transport.replug(path=b'new-path')
+        self.assertFalse(bridge.status()['connected'])
+        self.assertFalse(bridge.status()['devicePresent'])
+        self.assertEqual(transport.current.writes, [])
+        bridge.handle({'command': 'open'})
+        restored = bridge.status()
+        self.assertTrue(restored['connected'])
+        self.assertTrue(restored['devicePresent'])
+        self.assertGreater(restored['connectionRevision'], lost['connectionRevision'])
+        self.assertTrue(all(report[1:4] == [251, 251, 251] for report in transport.current.writes))
+
+    def test_status_rejects_same_path_with_changed_vendor_product_or_serial(self):
+        for field, value in [('vendor_id', 0x1189), ('product_id', 0x8830), ('serial_number', 'OTHER')]:
+            with self.subTest(field=field):
+                hid = FakeHID()
+                bridge = Bridge(transport=hid, backup_dir=self.temp.name, delay=0)
+                original = bridge.handle({'command': 'open'}).copy()
+                info = hid.enumerate()[0]
+                hid.enumerate = lambda: [dict(info, **{field: value})]
+                before = len(hid.writes)
+                status = bridge.status()
+                self.assertFalse(status['connected'])
+                self.assertFalse(status['devicePresent'])
+                self.assertEqual(status['device'], original)
+                self.assertEqual(len(hid.writes), before)
+                self.assertFalse(status['capabilities']['keyWrites'])
+                self.assertFalse(status['capabilities']['lightingWrite'])
+
+    def test_status_unplug_preserves_active_key_and_led_recovery(self):
+        self.open()
+        self.command('setLighting', layer=0, mode=1, color='#112233')
+        self.command('begin', lease='owner')
+        self.command('exchange', reportId=3, data=packet(253, 1, 1, 1), lease='owner')
+        baseline, key_backup = self.bridge.baseline_path, self.bridge.key_backup_path
+        journal = self.bridge._journal_path().read_bytes()
+        self.hid.enumerate = lambda: []
+        before = len(self.hid.writes)
+        status = self.bridge.status()
+        self.assertFalse(status['connected'])
+        self.assertTrue(status['leaseActive'])
+        self.assertTrue(status['keyWritePending'])
+        self.assertTrue(status['keyBackupStored'])
+        self.assertTrue(status['lightingRecoveryRequired'])
+        self.assertEqual(status['baselinePath'], baseline)
+        self.assertEqual(status['keyBackupPath'], key_backup)
+        self.assertTrue(Path(key_backup).exists())
+        self.assertEqual(self.bridge._journal_path().read_bytes(), journal)
+        self.assertEqual(self.bridge.modified_layers, {0})
+        self.assertEqual(len(self.hid.writes), before)
+        with self.assertRaises(ValueError):
+            self.open()
+        with self.assertRaises(ValueError):
+            self.command('abort', lease='owner')
+        self.assertTrue(self.bridge.status()['leaseActive'])
+        self.assertTrue(self.bridge.status()['keyWritePending'])
+
+    def test_explicit_key_recovery_rebinds_original_after_unplug(self):
+        for recovery in ('abort', 'recover'):
+            with self.subTest(recovery=recovery):
+                transport = ReplugTransport()
+                now = [0.0]
+                bridge = Bridge(transport=transport, backup_dir=self.temp.name, delay=0,
+                                lease_timeout=10, clock=lambda: now[0])
+                bridge.handle({'command': 'open'})
+                original = json.loads(json.dumps(transport.current.keys))
+                bridge.handle({'command': 'begin', 'lease': 'owner'})
+                bridge.handle({'command': 'exchange', 'reportId': 3,
+                               'data': packet(253, 1, 1, 1, 0, 1, 0, 0, 7), 'lease': 'owner'})
+                changed = json.loads(json.dumps(transport.current.keys))
+                backup = bridge.key_backup_path
+                enumerate_devices = transport.enumerate
+                transport.enumerate = lambda: []
+                self.assertFalse(bridge.status()['connected'])
+                transport.enumerate = enumerate_devices
+                transport.replug(path=b'returned-original')
+                transport.current.keys = changed
+                # Neither another tab nor an early expiry recovery may reopen USB.
+                with self.assertRaises(ValueError):
+                    bridge.handle({'command': 'abort', 'lease': 'other'})
+                with self.assertRaises(ValueError):
+                    bridge.handle({'command': 'recover'})
+                self.assertEqual(transport.current.writes, [])
+                if recovery == 'recover':
+                    now[0] = 11
+                result = bridge.handle({'command': recovery, **({'lease': 'owner'} if recovery == 'abort' else {})})
+                self.assertTrue(result['keyRestored'])
+                self.assertFalse(bridge.status()['leaseActive'])
+                self.assertFalse(bridge.key_write_pending)
+                self.assertEqual(transport.current.keys, original)
+                self.assertEqual(bridge.device['pathHex'], b'returned-original'.hex())
+                self.assertEqual(result['keyBackupPath'], backup)
+                self.assertEqual(transport.current.writes[0][1:4], [251, 251, 251])
+                self.assertFalse(any(report[1] == 254 for report in transport.current.writes))
+
+    def test_explicit_key_recovery_handles_fast_same_path_replug_without_status(self):
+        for recovery, closed_exception in [('abort', False), ('recover', False), ('abort', True)]:
+            with self.subTest(recovery=recovery, closed_exception=closed_exception):
+                transport = ReplugTransport()
+                now = [0.0]
+                bridge = Bridge(transport=transport, backup_dir=self.temp.name, delay=0,
+                                lease_timeout=10, clock=lambda: now[0])
+                bridge.handle({'command': 'open'})
+                original = json.loads(json.dumps(transport.current.keys))
+                bridge.handle({'command': 'begin', 'lease': 'owner'})
+                bridge.handle({'command': 'exchange', 'reportId': 3,
+                               'data': packet(253, 1, 1, 1, 0, 1, 0, 0, 7), 'lease': 'owner'})
+                changed = json.loads(json.dumps(transport.current.keys))
+                old = transport.replug()
+                transport.current.keys = changed
+                if closed_exception:
+                    def not_open(report):
+                        raise ValueError('device not open')
+                    old.write = not_open
+                # No absent status observation: enumeration still sees the old path.
+                self.assertIs(bridge.handle_device, old)
+                if recovery == 'recover':
+                    now[0] = 11
+                result = bridge.handle({'command': recovery, **({'lease': 'owner'} if recovery == 'abort' else {})})
+                self.assertTrue(result['keyRestored'])
+                self.assertEqual(transport.current.keys, original)
+                self.assertFalse(bridge.lease)
+                self.assertEqual(len(transport.opens), 2)
+                self.assertEqual(transport.current.writes[0][1:4], [251, 251, 251])
+
+    def test_fast_replug_rollback_rejects_wrong_identity_without_configuration(self):
+        transport = ReplugTransport()
+        bridge = Bridge(transport=transport, backup_dir=self.temp.name, delay=0)
+        bridge.handle({'command': 'open'})
+        bridge.handle({'command': 'begin', 'lease': 'owner'})
+        bridge.handle({'command': 'exchange', 'reportId': 3, 'data': packet(253, 1, 1, 1), 'lease': 'owner'})
+        transport.replug(identity=(12, 3, 11))
+        with self.assertRaisesRegex(ValueError, 'identity'):
+            bridge.handle({'command': 'abort', 'lease': 'owner'})
+        self.assertTrue(bridge.lease)
+        self.assertTrue(bridge.key_write_pending)
+        self.assertFalse(any(report[1] in (253, 254) for report in transport.current.writes))
+
+    def test_explicit_key_recovery_rejects_replacement_and_retains_retry(self):
+        for mismatch in ('serial', 'identity'):
+            with self.subTest(mismatch=mismatch):
+                transport = ReplugTransport()
+                bridge = Bridge(transport=transport, backup_dir=self.temp.name, delay=0)
+                bridge.handle({'command': 'open'})
+                bridge.handle({'command': 'begin', 'lease': 'owner'})
+                bridge.handle({'command': 'exchange', 'reportId': 3, 'data': packet(253, 1, 1, 1), 'lease': 'owner'})
+                backup = bridge.key_backup_path
+                enumerate_devices = transport.enumerate
+                transport.enumerate = lambda: []
+                bridge.status()
+                transport.enumerate = enumerate_devices
+                transport.replug(path=b'replacement', serial='OTHER' if mismatch == 'serial' else 'FAKE-SERIAL-1',
+                                 identity=(12, 3, 11) if mismatch == 'identity' else (16, 3, 11))
+                with self.assertRaisesRegex(ValueError, 'rollback failed'):
+                    bridge.handle({'command': 'abort', 'lease': 'owner'})
+                self.assertTrue(bridge.lease)
+                self.assertTrue(bridge.key_write_pending)
+                self.assertEqual(bridge.key_backup_path, backup)
+                self.assertFalse(any(report[1] in (253, 254) for report in transport.current.writes))
+                transport.replug(path=b'original-again')
+                self.assertTrue(bridge.handle({'command': 'abort', 'lease': 'owner'})['keyRestored'])
+
+    def test_status_enumeration_failure_is_unknown_and_never_claims_connected(self):
+        self.open()
+        before = len(self.hid.writes)
+        enumerate_devices = self.hid.enumerate
+        def fail_enumeration():
+            raise OSError('USB enumeration failed')
+        self.hid.enumerate = fail_enumeration
+        status = self.bridge.status()
+        self.assertFalse(status['connected'])
+        self.assertIsNone(status['devicePresent'])
+        self.assertEqual(status['connectionState'], 'unknown')
+        self.assertIn('enumeration', status['connectionError'])
+        self.assertEqual(len(self.hid.writes), before)
+        self.assertFalse(status['capabilities']['lightingRead'])
+        self.hid.enumerate = enumerate_devices
+        self.assertTrue(self.bridge.status()['connected'])
+        self.assertEqual(len(self.hid.writes), before)
+
     def test_daemon_output_one_response_per_input_without_logs(self):
         source = io.StringIO('{"id":1,"command":"status"}\n{"id":2,"command":"invalid"}\nnot json\n')
         output = io.StringIO()
