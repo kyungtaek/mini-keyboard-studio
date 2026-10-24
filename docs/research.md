@@ -34,3 +34,9 @@ WebHID는 report ID를 별도로 전달하므로 `sendReport(3,payload64)`를 �
 6. LED는 쓰기 전 별도 읽기만 수행해 레이어별 모드 `[1,0,0]`과 각 16개 RGB 값을 받았다. [읽기 원본](../evidence/led-read-only.json)
 
 각 앱 단축키의 실제 앱 내 실행, 동시 키 누름, LED의 눈으로 보는 효과·전원 유지와 기록 매체 수명은 위 설정 재읽기 증거와 다르다. 해당 검증 전에는 전체 기능 동등성이나 모든 HID 모델 호환을 주장하지 않는다.
+
+## Physical position correction — 2026-10-24
+
+The previous 16-key base grid `[[4,8,12,16],[3,7,11,15],[2,6,10,14],[1,5,9,13]]` was an unverified position assumption. With the editor rotated 270°, the user pressed its displayed positions 16→1 once each. The supplied log tail contains nine non-modifier keyDown chords. In chronological order their unique layer-1 action matches are `[15,2,6,10,14,1,5,9,13]`, corresponding to the old displayed positions 9→1. The user separately confirmed that the bottom-right displayed Enter (old ID1) physically emits Backspace (device layer1 ID13).
+
+These nine measurements fit a uniform 90° correction: the base firmware ID layout is row-major, and its rotated 270° grid is `[[4,8,12,16],[3,7,11,15],[2,6,10,14],[1,5,9,13]]`. The later full second pass (23:23:02–23:23:15) was exported locally before updating, and confirms all 16 positions in order: `[4,8,12,16,3,7,11,15,2,6,10,14,1,5,9,13]`. The raw session stays in the user’s Downloads folder, outside the repository. `tests/physical-layout.test.mjs` retains both the original nine-position tail and full 16-position second pass as regressions. The fix changes display/position lookup only, preserving stored action IDs, profile content, and device settings. Retesting all positions remains the physical acceptance step. The diagnostic layer selector compares only its selected layer. Other layers do not appear in blue highlights or matching results.

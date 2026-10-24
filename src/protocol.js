@@ -11,7 +11,7 @@ export const MODIFIERS={CTRL:241,SHIFT:242,ALT:243,META:244,RCTRL:245,RSHIFT:246
 const MEDIA={PLAY_PAUSE:0xcd,STOP:0xb7,NEXT_TRACK:0xb5,PREVIOUS_TRACK:0xb6,MUTE:0xe2,VOLUME_UP:0xe9,VOLUME_DOWN:0xea};
 const reverse=o=>Object.fromEntries(Object.entries(o).map(([k,v])=>[v,k]));
 const names=reverse({...KEY_CODES,...MODIFIERS});
-export function physicalActionId(row,col){if(!Number.isInteger(row)||!Number.isInteger(col)||row<0||row>3||col<0||col>3)throw Error('키 위치 오류');return col*4+4-row;}
+export function physicalActionId(row,col){if(!Number.isInteger(row)||!Number.isInteger(col)||row<0||row>3||col<0||col>3)throw Error('키 위치 오류');return row*4+col+1;}
 export function outputPayload(prefix){
  if(prefix[0]!==3||prefix.length>65)throw Error('잘못된 보고서');
  if(prefix[1]===0xfc)throw Error('모델 변경 명령은 지원하지 않습니다.');

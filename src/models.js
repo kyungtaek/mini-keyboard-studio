@@ -32,8 +32,10 @@ export function gridActionIds(modelOrId, rotation = 0) {
   if (![0, 90, 180, 270].includes(rotation)) throw new Error('회전은 0, 90, 180, 270도 중에서 선택해 주세요.');
   if (!Number.isSafeInteger(model.rows) || model.rows < 1 || !Number.isSafeInteger(model.columns) || model.columns < 1) throw new Error('키보드 모델의 행과 열 구성이 올바르지 않습니다.');
   if (model.rows * model.columns !== model.keys) return null;
+// The 16-key firmware IDs are row-major at 0 degrees. The former
+  // bottom-up column layout was contradicted by physical input measurement.
   let grid = Array.from({ length: model.rows }, (_, row) => Array.from({ length: model.columns }, (_, column) => (
-    model.id === 'mini-16x3' ? (column + 1) * model.rows - row : row * model.columns + column + 1
+    row * model.columns + column + 1
   )));
   for (let turn = 0; turn < rotation / 90; turn += 1) {
     grid = Array.from({ length: grid[0].length }, (_, row) => Array.from({ length: grid.length }, (_, column) => grid[grid.length - column - 1][row]));

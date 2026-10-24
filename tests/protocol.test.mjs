@@ -22,7 +22,7 @@ test('keyboard records preserve existing vendor timing mode',()=>{
  const r=raw();const encoded=encodeAction(r,{type:'key',keys:['B']});assert.equal(encoded[5],1);
 });
 test('physical grid matches column-major manufacturer layout',()=>{
- assert.deepEqual(Array.from({length:4},(_,r)=>Array.from({length:4},(_,c)=>physicalActionId(r,c))),[[4,8,12,16],[3,7,11,15],[2,6,10,14],[1,5,9,13]]);
+ assert.deepEqual(Array.from({length:4},(_,r)=>Array.from({length:4},(_,c)=>physicalActionId(r,c))),[[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]]);
 });
 test('backup requires exact complete layer, action and layer headers plus digest',async()=>{
  const layers=Array.from({length:3},(_,l)=>Array.from({length:25},(_,i)=>raw(i+1,l+1)));

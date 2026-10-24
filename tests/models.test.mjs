@@ -19,7 +19,7 @@ test('catalog distinguishes the verified device from unverified CH57x layouts', 
 });
 
 test('base grids preserve manufacturer physical IDs', () => {
-  assert.deepEqual(gridActionIds('mini-16x3'), [[4, 8, 12, 16], [3, 7, 11, 15], [2, 6, 10, 14], [1, 5, 9, 13]]);
+  assert.deepEqual(gridActionIds('mini-16x3'), [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16]]);
   assert.deepEqual(gridActionIds('mini-3x1'), [[1, 2, 3]]);
   assert.deepEqual(gridActionIds('mini-6x2'), [[1, 2, 3], [4, 5, 6]]);
   assert.equal(gridActionIds({ id: 'prototype', keys: 5, encoders: 1, rows: 2, columns: 3 }), null);
@@ -28,7 +28,7 @@ test('base grids preserve manufacturer physical IDs', () => {
 test('clockwise rotations move physical IDs without changing or duplicating them', () => {
   assert.deepEqual(gridActionIds('mini-6x1', 90), [[4, 1], [5, 2], [6, 3]]);
   assert.deepEqual(gridActionIds('mini-6x1', 270), [[3, 6], [2, 5], [1, 4]]);
-  assert.deepEqual(gridActionIds('mini-16x3', 90), [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16]]);
+  assert.deepEqual(gridActionIds('mini-16x3', 90), [[13, 9, 5, 1], [14, 10, 6, 2], [15, 11, 7, 3], [16, 12, 8, 4]]);
   for (const model of MODELS) {
     for (const rotation of [0, 90, 180, 270]) {
       const ids = gridActionIds(model, rotation).flat();

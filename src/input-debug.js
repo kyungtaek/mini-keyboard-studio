@@ -7,10 +7,10 @@ export function eventChord(event){
  if(!key)return null;
  return [...(event.control?['CTRL']:[]),...(event.shift?['SHIFT']:[]),...(event.alt?['ALT']:[]),...(event.meta?['META']:[]),key];
 }
-export function matchInput(chord,actions){
+export function matchInput(chord,actions,selectedLayer=null){
  if(!chord)return [];
  const result=[];
- (actions||[]).forEach((records,layer)=>records.forEach((action,index)=>{if(action?.type==='key'&&canonical(action.keys)===canonical(chord))result.push({layer:layer+1,id:index+1});}));
+ (actions||[]).forEach((records,layer)=>records.forEach((action,index)=>{if((selectedLayer===null||selectedLayer===layer+1)&&action?.type==='key'&&canonical(action.keys)===canonical(chord))result.push({layer:layer+1,id:index+1});}));
  return result;
 }
 export function appendObservation(list,event,expected){

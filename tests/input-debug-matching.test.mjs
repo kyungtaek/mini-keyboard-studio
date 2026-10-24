@@ -14,3 +14,10 @@ test('bounded observations retain expected position at event time',()=>{
  const list=[];for(let i=0;i<205;i++)appendObservation(list,{code:'Enter'},{id:i,layer:1});
  assert.equal(list.length,200);assert.equal(list[0].expected.id,5);assert.equal(list.at(-1).expected.id,204);
 });
+
+test('selected diagnostic layer excludes matching actions on other layers',()=>{
+ const actions=[[{type:'key',keys:['BACKSPACE']}],[{type:'disabled'}],[{type:'key',keys:['BACKSPACE']}]];
+ assert.deepEqual(matchInput(['BACKSPACE'],actions,1),[{layer:1,id:1}]);
+ assert.deepEqual(matchInput(['BACKSPACE'],actions,2),[]);
+ assert.deepEqual(matchInput(['BACKSPACE'],actions,3),[{layer:3,id:1}]);
+});
