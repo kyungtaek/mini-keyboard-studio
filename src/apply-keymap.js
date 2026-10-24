@@ -1,5 +1,9 @@
 import {validateProfile} from './profile.js';
 import {resolveLighting} from './lighting-profile.js';
+export function lightingActivationNote(result){
+ if(result?.lightingModeChanged)return 'LED 모드 효과가 바뀌지 않으면 USB 케이블을 재연결하세요.';
+ return result?.lightingChanged?'LED 설정 저장을 확인했습니다.':'';
+}
 function expectedDevice(device,status){
  const target=device.hidDevice,actual=status.device;
  if(!target?.pathHex||actual?.pathHex!==target.pathHex||!target.serialNumber||actual.serialNumber!==target.serialNumber||actual.vendorId!==target.vendorId||actual.productId!==target.productId||!Array.isArray(actual.identity)||!Array.isArray(device.identity)||actual.identity.length!==3||actual.identity.some((value,index)=>value!==device.identity[index]))throw Error('키보드 연결이 변경되었습니다. 다시 연결한 뒤 적용하세요.');
@@ -21,6 +25,7 @@ export async function applyKeymap(device,value,{companionCall,persistBackup,onPr
   if(desired.mode>5)throw Error('LED 모드를 0~5 중에서 선택하세요.');
   return [{layer:index,...desired}];
  });
+ const lightingModeChanged=layers.some(value=>value.mode!==current.layers[value.layer].mode);
  expectedDevice(device,await companionCall('status'));
  const keys=await device.apply(profile,{persistBackup,onProgress});
  if(!layers.length)return {...keys,lightingChanged:0};
@@ -28,7 +33,7 @@ export async function applyKeymap(device,value,{companionCall,persistBackup,onPr
   onProgress('LED 색상·모드 저장 및 재읽기 확인 중…');
   const result=await companionCall('saveProfileLighting',{layers,expectedDevice:binding});
   if(result.verified!==true)throw Error('LED 재읽기 검증 결과를 받지 못했습니다.');
-  return {...keys,lightingChanged:layers.length};
+  return {...keys,lightingChanged:layers.length,lightingModeChanged};
  }catch(error){
   if(keys.changed&&keys.backup){
    try{expectedDevice(device,await companionCall('status'));await device.restore(keys.backup,{persistBackup,onProgress});}

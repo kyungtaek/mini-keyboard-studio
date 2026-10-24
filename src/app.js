@@ -1,6 +1,6 @@
 import { createProfile, validateProfile, actionLabel, encodeShare, decodeShare, saveToLibrary, loadLibrary, deleteFromLibrary } from './profile.js';
 import { connectDevice } from './device.js';
-import { applyKeymap } from './apply-keymap.js';
+import { applyKeymap,lightingActivationNote } from './apply-keymap.js';
 import { keyLightingHTML,updateKeyLighting } from './key-lighting-ui.js';
 import { toProfileActions } from './action-mapping.js';
 import { companionCall } from './companion.js';
@@ -380,9 +380,9 @@ async function applyRotation() {
     const result=await applyKeymap(targetDevice,keysOnly,{companionCall,persistBackup,onProgress:progress});
     if(device!==targetDevice)throw Error('키보드 연결이 변경되었습니다.');
     profile=next;touch();fullRender();persistDraft();await refreshSnapshot();
-    progress(`${result.changed}개 키 동작 재배치 · 저장 확인 완료`);
+    progress(`${result.changed}개 키 동작 재배치 · 저장 확인 완료${result.lightingModeChanged?" · 모드 효과 확인 필요":""}`);
     diagnostic('info','rotation.apply.complete',{rotation:change.target,changed:result.changed});
-    toast('키 배치를 적용했습니다. 노브 설정은 유지했습니다.');
+    toast(`키 배치를 적용했습니다. 노브 설정은 유지했습니다. ${lightingActivationNote(result)}`.trim());
   });
 }
 function openTool(id) {
@@ -491,7 +491,7 @@ document.addEventListener('click', async event => {
       case 'read-device': await withDeviceWork(async () => { progress('키·다이얼 동작을 읽고 있습니다…'); const backup = await device.readAll(); installSnapshot(backup); await persistBackup(backup); const { profileFromBackup } = await import('./device.js'); profile = validateProfile(await profileFromBackup(backup, '키보드에서 읽은 키맵')); profile.id = createProfile().id; layer = 0; selected = 1; notice = ''; fullRender(); persistDraft(); progress('동작을 읽고 백업했습니다.'); toast('현재 키보드 설정을 읽었습니다.'); }); break;
       case 'backups': renderBackups(); $('#backups-dialog').showModal(); break;
       case 'import-backup': $('#backup-file').value = ''; $('#backup-file').click(); break;
-      case 'apply': if (device?.modelId !== profile.modelId) throw new Error('연결한 장치와 키맵의 모델이 다릅니다. 설정 읽기로 올바른 모델의 키맵을 열어 주세요.'); validateCurrent(); await withDeviceWork(async () => { persistDraft(); const result = await applyKeymap(device,profile,{companionCall,persistBackup,onProgress:progress}); await refreshSnapshot(); progress(`${result.changed}개 동작${result.lightingChanged?` · LED ${result.lightingChanged}개 레이어`:""} 적용 · 재읽기 확인`); toast('장치 설정을 적용하고 다시 읽어 확인했습니다.'); }); break;
+      case 'apply': if (device?.modelId !== profile.modelId) throw new Error('연결한 장치와 키맵의 모델이 다릅니다. 설정 읽기로 올바른 모델의 키맵을 열어 주세요.'); validateCurrent(); await withDeviceWork(async () => { persistDraft(); const result = await applyKeymap(device,profile,{companionCall,persistBackup,onProgress:progress}); await refreshSnapshot(); progress(`${result.changed}개 동작${result.lightingChanged?` · LED ${result.lightingChanged}개 레이어`:""} 저장 · 재읽기 확인${result.lightingModeChanged?" · 모드 효과 확인 필요":""}`); toast(`장치 설정을 저장하고 다시 읽어 확인했습니다. ${lightingActivationNote(result)}`.trim()); }); break;
     }
   } catch (error) { toast(explain(error),true); }
 });
@@ -674,6 +674,7 @@ async function useCatalogEntry(id, apply) {
   catalogDownloading = true; renderCatalogCards();
   $('#catalog-result').textContent = `${entry.name} 다운로드 중…`;
   const work = async () => {
+    let activationNote='';
     const result = await catalogCall('download', {id});
     const next = validateProfile(result.profile);
     if (next.modelId !== entry.modelId) throw new Error('목록과 다운로드한 키맵 모델이 다릅니다. 카탈로그를 새로고침하세요.');
@@ -686,9 +687,10 @@ async function useCatalogEntry(id, apply) {
       const applied = await applyKeymap(targetDevice,profile,{companionCall,persistBackup,onProgress:progress});
       requireCatalogDevice(entry, targetDevice);
       await refreshSnapshot();
-      progress(`${applied.changed}개 동작 적용 · 재읽기 확인`);
+      activationNote=lightingActivationNote(applied);
+      progress(`${applied.changed}개 동작 저장 · 재읽기 확인${applied.lightingModeChanged?' · 모드 효과 확인 필요':''}`);
     }
-    const message = apply ? '키맵을 적용하고 다시 읽어 확인했습니다.' : '키맵을 내 보관함에 저장하고 편집기로 열었습니다.';
+    const message = apply ? `키맵을 저장하고 다시 읽어 확인했습니다. ${activationNote}`.trim() : '키맵을 내 보관함에 저장하고 편집기로 열었습니다.';
     $('#catalog-result').textContent = message;
     $('#presets-dialog').close(); toast(message);
   };
@@ -838,7 +840,7 @@ async function sendLEDState(state) {
     const result=await companionCall('state',{event:{version:1,source:'manual',state}});
     const desired=result.desired;
     $('#lighting-preview').hidden=false;
-    $('#lighting-result-label').textContent=result.preview===true?'미리보기':result.verified===true?'장치 반영':result.queued===true?'처리 대기':'상태 확인';
+    $('#lighting-result-label').textContent=result.preview===true?'미리보기':result.verified===true?'장치 저장 확인':result.queued===true?'처리 대기':'상태 확인';
     $('#lighting-result-detail').textContent=desired?`레이어 ${desired.layer+1} · 모드 ${desired.mode}`:'';
     const color=desired?.colors?.[0];
     $('#lighting-swatch').style.backgroundColor=/^#[0-9a-f]{6}$/i.test(color||'')?color:'#555555';

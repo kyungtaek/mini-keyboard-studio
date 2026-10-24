@@ -54,7 +54,7 @@ export function initLightingEditor({container,companionCall,getDevice,getBusy=()
    <div class="direct-lighting-controls"><label class="field"><span class="field-label">레이어</span><select data-direct-layer aria-label="직접 설정할 LED 레이어"><option value="0">레이어 1</option><option value="1">레이어 2</option><option value="2">레이어 3</option></select></label>
    <label class="field"><span class="field-label">모드</span><select data-direct-mode aria-label="LED 모드">${Array.from({length:6},(_,mode)=>`<option value="${mode}">모드 ${mode}</option>`).join('')}</select></label>
    <label class="field"><span class="field-label">색상</span><select data-direct-color-mode aria-label="LED 색상 설정 방식"><option value="uniform">전체 같은 색</option><option value="individual">슬롯별 색</option></select></label></div>
-   <p class="direct-lighting-note small-text muted">모드별 실제 효과와 색상 슬롯의 물리 위치는 확인되지 않았습니다.</p>
+   <p class="direct-lighting-note small-text muted">모드 효과가 바뀌지 않으면 USB 케이블을 재연결하세요. 색상 변경에 항상 필요한 것은 아닙니다.</p>
    <label class="direct-uniform" data-direct-uniform><span>전체 색상</span><input type="color" data-direct-color value="#539df5" aria-label="전체 LED 색상"></label>
    <fieldset class="direct-color-slots" data-direct-slots hidden><legend class="sr-only">색상 슬롯 16개</legend>${Array.from({length:16},(_,index)=>`<label><span>${index+1}</span><input type="color" value="#539df5" data-direct-slot="${index}" aria-label="LED 색상 슬롯 ${index+1}"></label>`).join('')}</fieldset>
    <div class="direct-lighting-actions"><button type="button" class="quiet" data-direct-read>현재 LED 불러오기</button><button type="submit" class="primary" data-direct-apply disabled>LED 적용</button></div>
@@ -112,9 +112,10 @@ export function initLightingEditor({container,companionCall,getDevice,getBusy=()
   work(async()=>{
    const desired={layer:Number(layer.value),mode:Number(mode.value),colors:colorMode.value==='uniform'?Array(16).fill(color.value):slots.map(slot=>slot.value)};
    message('원본 LED 백업 후 적용·재읽기 확인 중…');
+   const modeChanged=cached[desired.layer].mode!==desired.mode;
    const result=await controller.apply(desired);
    if(cached)cached[desired.layer]={mode:desired.mode,colors:desired.colors};
-   message(result.changed?'LED 적용과 재읽기 확인을 마쳤습니다.':'장치 LED가 이미 같은 설정입니다.');
+   message(modeChanged?'LED 저장 확인 완료 · 모드 효과가 바뀌지 않으면 USB 케이블을 재연결하세요.':result.changed?'LED 색상 저장과 재읽기 확인을 마쳤습니다.':'장치에 저장된 LED 값이 이미 같은 설정입니다.');
    await onApplied(result);
   });
  });
