@@ -4,7 +4,7 @@ Mini Keyboard 앱 없이 키·다이얼 설정을 만들고 USB 키보드에 적
 
 ## macOS 앱
 
-Apple Silicon용 **Mini Keyboard Studio 0.2.0**을 `/Users/kent/Applications/Mini Keyboard Studio.app`에 설치했습니다. 웹 편집기·HID 실행 파일·샘플 6종을 한 앱에 포함합니다. 별도 Node/Python 설치나 서버 실행 없이 앱을 엽니다. 배포 파일은 `dist/Mini Keyboard Studio-0.2.0-arm64-mac.zip`입니다.
+Apple Silicon용 **Mini Keyboard Studio 0.3.0**을 `/Users/kent/Applications/Mini Keyboard Studio.app`에 설치했습니다. 웹 편집기·HID 실행 파일·샘플 6종을 한 앱에 포함합니다. 별도 Node/Python 설치나 서버 실행 없이 앱을 엽니다. 배포 파일은 `dist/Mini Keyboard Studio-0.3.0-arm64-mac.zip`입니다.
 
 - 창을 닫으면 메뉴 막대에서 계속 실행됩니다. **종료** 또는 Cmd+Q는 HID 복구와 실행 파일 종료를 기다립니다.
 - 메뉴 막대 아이콘 또는 앱 메뉴에서 **설정 열기**, **로그인 시 자동 실행**, **데이터 폴더 열기**, **Codex 연동용 로컬 API**를 사용할 수 있습니다.
@@ -34,9 +34,20 @@ Apple Silicon용 **Mini Keyboard Studio 0.2.0**을 `/Users/kent/Applications/Min
 
 데스크톱 작업 화면은 창 높이에 맞춰 키보드를 조절합니다. 파일 가져오기·내보내기·공유는 왼쪽 **파일·공유**, 새 키맵은 **내 키맵**의 + 버튼에 있습니다. 작은 창과 모바일은 세로로 이어서 표시합니다.
 
-## 시작 템플릿
+## GitHub 키맵 카탈로그
 
-왼쪽 **시작 템플릿**에서 VS Code Mac, Codex Mac, Claude Mac, 시스템 탐색·미디어, Forza Horizon 4 PC, Call of Duty: Modern Warfare 4 PC의 6종 샘플을 불러옵니다. 각 템플릿은 16키·3다이얼·3레이어를 편집하는 시작점이며, 선택만으로 장치에 기록하지 않습니다. 게임의 사용자 지정 바인딩 제안은 공식 기본 키와 구분해 표시합니다. 키맵을 수정하고 저장·내보내기·공유하거나 **적용**으로 연결 장치에 기록할 수 있습니다.
+앱 소스는 [mini-keyboard-studio](https://github.com/kyungtaek/mini-keyboard-studio), 공유 키맵은 [mini-keyboard-keymap-catalog](https://github.com/kyungtaek/mini-keyboard-keymap-catalog) 비공개 저장소에서 관리합니다.
+
+왼쪽 **키맵 카탈로그**에서 목록을 검색하고 **편집기로 열기** 또는 **다운로드·적용**을 선택합니다. 편집기로 열면 현재 키맵을 보관하고 다운로드한 키맵에 새 ID를 부여합니다. 적용은 연결 장치 모델 확인, 전체 원본 백업, 변경 기록, 재읽기 검증을 수행합니다. 장치가 없거나 모델이 다르면 적용 버튼이 비활성화됩니다.
+
+- 기존 `gh auth login` 인증을 자동으로 사용합니다. GitHub CLI가 없는 Mac에서는 카탈로그의 **GitHub 연결**에서 해당 비공개 저장소에 **Contents: read-only** 권한을 가진 fine-grained 토큰을 등록합니다. 토큰은 Electron 메인 프로세스에서만 사용하고 macOS 시스템 암호화로 앱 데이터 폴더에 저장합니다.
+- 목록과 파일을 동일한 Git 커밋에서 받아 SHA-256과 키맵 형식을 검증합니다. 네트워크 실패 시 마지막 검증 목록과 이미 다운로드한 파일을 사용할 수 있습니다. 처음 받는 파일은 온라인 연결이 필요합니다.
+- 카탈로그는 자동 적용하지 않습니다. 새 버전은 **새로고침**으로 확인하고 사용자가 적용합니다. JSON 데이터만 읽으며 실행 코드는 받지 않습니다.
+- 카탈로그 저장소의 README대로 JSON을 추가하고 manifest 생성·검증 후 push하면 앱에 표시됩니다.
+- **기본 샘플** 탭은 인터넷과 인증 없이 사용합니다. VS Code Mac, Codex Mac, Claude Mac, 시스템 탐색·미디어, Forza Horizon 4 PC, Modern Warfare 4 PC의 6종이며 각각 16키·3다이얼·3레이어를 포함합니다. 게임 키맵은 공식 기본 키가 아닌 사용자 지정 바인딩 제안입니다.
+- GitHub 카탈로그는 Electron 앱에서 사용합니다. 일반 브라우저 모드는 기본 샘플을 제공합니다.
+
+장치 백업·serial·실험 원본이 포함된 `evidence/`, `device-backups/`, `companion/backups/`와 빌드 산출물은 Git에 올리지 않습니다. 일부 연구 문서는 로컬에만 보관하는 증거 파일을 참조합니다.
 
 ## 보조앱과 상태·LED
 

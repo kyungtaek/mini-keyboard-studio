@@ -1,6 +1,6 @@
 {
   "name": "mini-keyboard-studio",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Local macro keyboard editor and HID companion",
   "author": "Mini Keyboard Studio",
   "main": "desktop/main.mjs",
@@ -25,10 +25,43 @@
     "appId": "io.minikeyboard.studio",
     "productName": "Mini Keyboard Studio",
     "asar": true,
-    "directories": {"output":"dist"},
-    "files": ["desktop/**", "!desktop/icons/AppIcon.iconset/**", "src/**", "scripts/companion-api.mjs", "scripts/static-path.mjs", "index.html", "presets/**", "data/shortcuts/**", "package.json"],
-    "extraResources": [{"from":"build/hid/mini-keyboard-hid","to":"hid"}],
-    "protocols": [{"name":"Mini Keyboard keymap","schemes":["mini-keyboard"]}],
-    "mac": {"target":["dir","zip"],"category":"public.app-category.utilities","icon":"desktop/icons/app.icns","identity":"-","hardenedRuntime":false}
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "desktop/**",
+      "!desktop/icons/AppIcon.iconset/**",
+      "src/**",
+      "scripts/companion-api.mjs",
+      "scripts/static-path.mjs",
+      "index.html",
+      "presets/**",
+      "data/shortcuts/**",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "build/hid/mini-keyboard-hid",
+        "to": "hid"
+      }
+    ],
+    "protocols": [
+      {
+        "name": "Mini Keyboard keymap",
+        "schemes": [
+          "mini-keyboard"
+        ]
+      }
+    ],
+    "mac": {
+      "target": [
+        "dir",
+        "zip"
+      ],
+      "category": "public.app-category.utilities",
+      "icon": "desktop/icons/app.icns",
+      "identity": "-",
+      "hardenedRuntime": false
+    }
   }
 }

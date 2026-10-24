@@ -58,7 +58,7 @@ $('#app').innerHTML = `
       <div class="sidebar-heading"><h2>내 키맵</h2><button class="quiet new-keymap" data-action="new" title="새 키맵" aria-label="새 키맵">${icon('plus')}</button></div>
       <div class="library-list" id="library-list"></div>
       <section class="file-tools" aria-label="파일·공유"><h3>파일·공유</h3><button class="quiet" data-action="import">${icon('import')}가져오기</button><button class="quiet" data-action="export">${icon('export')}내보내기</button><button class="quiet" data-action="share">${icon('share')}공유 링크</button></section>
-      <div class="sidebar-backup"><button class="quiet small" data-action="presets">${icon('file')}시작 템플릿</button><button class="quiet small" data-action="backups">${icon('clock')}장치 백업</button></div>
+      <div class="sidebar-backup"><button class="quiet small" data-action="presets">${icon('file')}키맵 카탈로그</button><button class="quiet small" data-action="backups">${icon('clock')}장치 백업</button></div>
 
     </aside>
     <main class="editor-main">
@@ -75,7 +75,13 @@ $('#app').innerHTML = `
   <input class="file-input" type="file" id="import-file" accept=".json,application/json">
   <input class="file-input" type="file" id="backup-file" accept=".json,application/json">
   <dialog id="share-dialog" aria-labelledby="share-title"><div class="dialog-heading"><h2 id="share-title">키맵 링크 공유</h2><button class="quiet small" data-close="share-dialog" aria-label="닫기">${icon('close')}</button></div><p>키맵을 링크에 담았습니다. 링크를 받은 사람은 자신의 작업으로 열어 수정할 수 있습니다. 장치 백업은 포함하지 않습니다.</p><label class="sr-only" for="share-url">공유 링크</label><input class="share-input" id="share-url" readonly><p class="share-privacy">링크에는 키 입력과 매크로가 그대로 들어갑니다. 비밀번호 등 민감한 내용을 넣지 마세요.</p><div class="dialog-actions"><button data-action="copy-share" class="primary">링크 복사</button></div></dialog>
-  <dialog id="presets-dialog" aria-labelledby="presets-title"><div class="dialog-heading"><h2 id="presets-title">시작 템플릿</h2><button class="quiet small" data-close="presets-dialog" aria-label="닫기">${icon('close')}</button></div><p>자주 쓰는 조합에서 시작해 나에게 맞게 바꾸세요. 템플릿은 편집기로만 가져옵니다.</p><div class="backup-list" id="presets-list"></div><div class="dialog-actions"><button data-close="presets-dialog">닫기</button></div></dialog>
+  <dialog id="presets-dialog" class="catalog-dialog" aria-labelledby="presets-title"><div class="dialog-heading"><div><h2 id="presets-title">키맵 카탈로그</h2><p class="catalog-subtitle">마음에 드는 키맵을 골라 내 키보드에 맞춰 보세요.</p></div><button class="quiet small" data-close="presets-dialog" aria-label="닫기">${icon('close')}</button></div>
+    <div class="catalog-topline"><div class="catalog-tabs" role="tablist" aria-label="키맵 출처"><button role="tab" id="catalog-github-tab" aria-selected="true" aria-controls="catalog-remote" data-catalog-tab="github">GitHub 카탈로그</button><button role="tab" id="catalog-bundled-tab" aria-selected="false" aria-controls="catalog-bundled" data-catalog-tab="bundled">기본 샘플</button></div><button class="quiet small" data-action="catalog-settings" id="catalog-settings">연결 설정</button></div>
+    <section id="catalog-remote" role="tabpanel" aria-labelledby="catalog-github-tab"><div class="catalog-source"><span id="catalog-auth">GitHub 연결 확인 전</span><button class="quiet small" data-action="catalog-refresh" id="catalog-refresh">새로고침</button></div><div class="catalog-filters"><label><span class="sr-only">키맵 검색</span><input type="search" id="catalog-search" placeholder="이름, 앱, 태그 검색" autocomplete="off"></label><label><span class="sr-only">플랫폼 필터</span><select id="catalog-platform"><option value="">모든 플랫폼</option><option value="mac">Mac</option><option value="windows">Windows</option><option value="linux">Linux</option><option value="any">공통</option></select></label><label><span class="sr-only">키보드 모델 필터</span><select id="catalog-model"><option value="">모든 모델</option>${modelList.map(model=>`<option value="${escapeHTML(model.id)}">${escapeHTML(model.name)}</option>`).join('')}</select></label></div><p id="catalog-status" class="catalog-status" role="status"></p><div id="catalog-list" class="catalog-grid"></div></section>
+    <section id="catalog-bundled" role="tabpanel" aria-labelledby="catalog-bundled-tab" hidden><p class="catalog-status">앱에 포함된 샘플입니다. 편집기로 열어 수정할 수 있습니다.</p><div class="catalog-grid" id="presets-list"></div></section>
+    <p id="catalog-result" class="catalog-result" role="status"></p>
+  </dialog>
+  <dialog id="catalog-token-dialog" class="catalog-token-dialog" aria-labelledby="catalog-token-title"><div class="dialog-heading"><h2 id="catalog-token-title">GitHub 연결</h2><button class="quiet small" data-close="catalog-token-dialog" aria-label="닫기">${icon('close')}</button></div><p class="small-text muted">kyungtaek/mini-keyboard-keymap-catalog</p><p class="catalog-status" id="catalog-token-status"></p><p class="small-text muted">GitHub CLI에 로그인되어 있으면 그대로 사용할 수 있습니다. 토큰으로 연결하려면 이 저장소만 선택한 Fine-grained token에 Contents: Read-only 권한을 주세요. 비공개 저장소용 classic token은 repo 범위가 필요합니다.</p><form id="catalog-token-form"><label class="field"><span class="field-label">GitHub 토큰</span><input type="password" id="catalog-token" autocomplete="off" spellcheck="false" placeholder="토큰 붙여넣기" required></label><p class="catalog-status">토큰은 데스크톱 앱의 암호화 저장소에 보관합니다.</p><p class="error-text" id="catalog-token-error" role="alert"></p><div class="dialog-actions"><button type="button" class="quiet" data-action="catalog-clear-token" id="catalog-clear-token">저장한 토큰 삭제</button><button type="submit" class="primary" id="catalog-save-token">연결</button></div></form></dialog>
   <dialog id="backups-dialog" aria-labelledby="backups-title"><div class="dialog-heading"><h2 id="backups-title">장치 백업</h2><button class="quiet small" data-close="backups-dialog" aria-label="닫기">${icon('close')}</button></div><p>적용 전 읽어 둔 장치의 키·다이얼 동작입니다. LED·펌웨어는 포함하지 않습니다. 복원할 때도 현재 키·다이얼 동작을 먼저 백업합니다.</p><div id="backup-list" class="backup-list"></div><div class="dialog-actions"><button data-action="import-backup">${icon('import')}백업 파일 가져오기</button><button data-close="backups-dialog">닫기</button></div></dialog>
   <dialog id="lighting-dialog" class="lighting-dialog" aria-labelledby="lighting-title"><div class="dialog-heading"><div class="lighting-title"><h2 id="lighting-title">상태·LED</h2><span class="manual-badge" title="앱의 실제 상태와 연동하지 않는 수동 이벤트 테스트입니다.">수동 이벤트</span></div><button class="quiet small" data-close="lighting-dialog" aria-label="닫기">${icon('close')}</button></div><div class="lighting-switch-row"><span id="lighting-capability" class="muted small-text">연결 확인 중</span><label class="lighting-switch" title="켜고 상태를 누르면 해당 레이어의 장치 LED를 변경합니다. 변경 전 원본 LED를 백업하고 재읽기로 검증합니다."><input type="checkbox" id="lighting-enabled"><span class="switch-track" aria-hidden="true"></span><span>장치 LED 사용</span></label></div><div class="lighting-rules" id="lighting-rules">${ledStates.map(item=>`<div class="lighting-rule" data-led-rule="${item.state}"><button class="state-event" data-led-state="${item.state}"><span class="state-symbol" aria-hidden="true">${item.symbol}</span>${item.name}</button><label class="color-picker" title="${item.name} 색"><input type="color" value="${item.color}" data-led-color="${item.state}" aria-label="${item.name} 색"></label><select data-led-layer="${item.state}" aria-label="${item.name} 레이어"><option value="0">레이어 1</option><option value="1">레이어 2</option><option value="2">레이어 3</option></select></div>`).join('')}</div><div class="lighting-preview" id="lighting-preview" hidden><span class="lighting-swatch" id="lighting-swatch" aria-hidden="true"></span><div><strong id="lighting-result-label">미리보기</strong><span id="lighting-result-detail"></span></div></div><div class="error-text" id="lighting-error" role="alert"></div><div class="lighting-readings" id="lighting-readings"></div><div class="lighting-actions"><button data-action="read-lighting">${icon('light')}장치 LED 읽기</button><button class="quiet" data-action="restore-lighting" title="보조앱이 변경 전에 백업한 원래 LED로 복원하고 다시 읽어 확인합니다.">원래 LED 복원</button></div></dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -297,6 +303,7 @@ function updateDeviceUI() {
   else if (connected) $('#device-description').textContent = `연결됨${deviceSnapshot?' · 현재 동작 표시 중':''}`;
   else $('#device-description').textContent = $('#transport-select').value==='companion'?'보조앱 연결 전':'USB 연결 전';
   document.body.classList.toggle('working',busy);
+  renderCatalogCards();
 }
 async function withDeviceWork(work) {
   if (!device?.compatible || busy) return;
@@ -355,6 +362,9 @@ document.addEventListener('click', async event => {
       case 'copy-layer': copiedLayer = {modelId:profile.modelId,actions:structuredClone(profile.layers[layer].actions)}; $('#paste-layer').disabled = false; toast(`레이어 ${layer+1}의 ${actionCount(currentModel())}개 동작을 복사했습니다.`); break;
       case 'paste-layer': if (copiedLayer && copiedLayer.modelId === profile.modelId) { profile.layers[layer].actions = structuredClone(copiedLayer.actions); touch(); renderBoard(); renderEditor(); toast(`레이어 ${layer+1}에 붙여넣었습니다.`); } break;
       case 'presets': await openPresets(); break;
+      case 'catalog-refresh': await loadCatalog(); break;
+      case 'catalog-settings': await openCatalogSettings(); break;
+      case 'catalog-clear-token': await clearCatalogToken(); break;
       case 'read-device': await withDeviceWork(async () => { progress('키·다이얼 동작을 읽고 있습니다…'); const backup = await device.readAll(); installSnapshot(backup); await persistBackup(backup); const { profileFromBackup } = await import('./device.js'); profile = validateProfile(await profileFromBackup(backup, '키보드에서 읽은 키맵')); profile.id = createProfile().id; layer = 0; selected = 1; notice = ''; fullRender(); persistDraft(); progress('동작을 읽고 백업했습니다.'); toast('현재 키보드 설정을 읽었습니다.'); }); break;
       case 'backups': renderBackups(); $('#backups-dialog').showModal(); break;
       case 'import-backup': $('#backup-file').value = ''; $('#backup-file').click(); break;
@@ -420,29 +430,209 @@ $('#backup-file').addEventListener('change', async event => {
 });
 
 let presets = [];
-async function openPresets() {
-  $('#presets-list').textContent = '템플릿을 불러오는 중…';
-  $('#presets-dialog').showModal();
-  try {
-    const response = await fetch('./presets/index.json');
-    if (!response.ok) throw new Error('템플릿 목록을 불러오지 못했습니다.');
-    presets = await response.json();
-    if (!Array.isArray(presets)) throw new Error('템플릿 목록 형식이 올바르지 않습니다.');
-    $('#presets-list').innerHTML = presets.length ? presets.map((item,index) => `<div class="backup-row"><strong>${escapeHTML(item.name)}</strong><p>${escapeHTML(item.description)}</p><button class="small" data-preset-index="${index}">이 템플릿으로 시작</button></div>`).join('') : '<p class="backup-empty">준비된 템플릿이 없습니다. 새 키맵에서 자유롭게 시작해 보세요.</p>';
-  } catch (error) { $('#presets-list').textContent = explain(error); }
+let catalogData = null;
+let catalogAuth = null;
+let catalogLoading = false;
+let catalogDownloading = false;
+let catalogAuthBusy = false;
+const catalogAvailable = () => typeof globalThis.miniKeyboardDesktop?.catalog === 'function';
+const catalogCall = (command, args = {}) => {
+  if (!catalogAvailable()) throw new Error('GitHub 카탈로그는 데스크톱 앱에서 사용할 수 있습니다. 기본 샘플은 브라우저에서도 열 수 있습니다.');
+  return globalThis.miniKeyboardDesktop.catalog(command, args);
+};
+const platformLabel = value => ({mac:'Mac',windows:'Windows',linux:'Linux',any:'공통'})[value] || value;
+function catalogModelName(id) { return modelList.find(model => model.id === id)?.name || id; }
+function catalogProposal(item) {
+  return /바인딩 제안/.test(item.name || '') || (item.category === 'game' && (item.tags || []).some(tag => /binding.proposal|requires-game-rebinding|바인딩.제안/i.test(tag)));
 }
-$('#presets-list').addEventListener('click', async event => {
-  const target = event.target.closest('[data-preset-index]'); if (!target) return;
+function setCatalogTab(tab) {
+  const bundled = tab === 'bundled';
+  $('#catalog-remote').hidden = bundled;
+  $('#catalog-bundled').hidden = !bundled;
+  $('#catalog-github-tab').setAttribute('aria-selected', String(!bundled));
+  $('#catalog-bundled-tab').setAttribute('aria-selected', String(bundled));
+  $('#catalog-github-tab').tabIndex = bundled ? -1 : 0;
+  $('#catalog-bundled-tab').tabIndex = bundled ? 0 : -1;
+  $('#catalog-settings').hidden = bundled;
+}
+function renderCatalogAuth() {
+  const label = !catalogAvailable() ? '데스크톱 앱에서 GitHub 연결 가능' : catalogAuth?.connected ? `GitHub 연결됨 · ${catalogAuth.method === 'gh' ? 'GitHub CLI' : '저장한 토큰'}` : 'GitHub 연결 필요';
+  $('#catalog-auth').textContent = label;
+  $('#catalog-token-status').textContent = label;
+}
+function renderCatalogCards() {
+  // This also runs when a device connects, disconnects, or starts another operation.
+  if (!$('#catalog-list')) return;
+  const entries = catalogData?.manifest?.entries || [];
+  const query = $('#catalog-search').value.trim().toLocaleLowerCase();
+  const platform = $('#catalog-platform').value, model = $('#catalog-model').value;
+  const filtered = entries.filter(item => (!platform || item.platform === platform || item.platform === 'any') && (!model || item.modelId === model) && `${item.name} ${item.description} ${(item.tags || []).join(' ')}`.toLocaleLowerCase().includes(query));
+  $('#catalog-list').innerHTML = filtered.length ? filtered.map(item => {
+    const unavailable = busy || catalogDownloading;
+    const reason = busy ? '장치 작업이 끝난 뒤 적용하세요.' : !device ? '키보드를 먼저 연결하세요.' : !device.compatible ? '지원되는 키보드를 연결하세요.' : device.modelId !== item.modelId ? '연결한 키보드와 키맵 모델이 다릅니다.' : '현재 키·다이얼 동작을 백업한 뒤 적용합니다.';
+    return `<article class="catalog-card"><div class="catalog-card-meta"><span>${escapeHTML(platformLabel(item.platform))}</span><span>${escapeHTML(catalogModelName(item.modelId))}</span><span>v${escapeHTML(item.version)}</span></div><h3>${escapeHTML(item.name)}</h3>${catalogProposal(item) ? '<span class="catalog-proposal">바인딩 제안</span>' : ''}<p title="${escapeHTML(item.description)}">${escapeHTML(item.description)}</p><div class="catalog-card-actions"><button class="small" data-catalog-open="${escapeHTML(item.id)}" ${unavailable?'disabled':''}>편집기로 열기</button><button class="small primary" data-catalog-apply="${escapeHTML(item.id)}" title="${escapeHTML(reason)}" ${unavailable || !device?.compatible || device.modelId !== item.modelId?'disabled':''}>다운로드·적용</button></div></article>`;
+  }).join('') : `<p class="catalog-empty">${catalogLoading ? '카탈로그를 불러오는 중…' : catalogData ? '조건에 맞는 키맵이 없습니다.' : 'GitHub에 연결한 뒤 새로고침하세요. 기본 샘플도 바로 사용할 수 있습니다.'}</p>`;
+  $('#catalog-refresh').disabled = catalogLoading || catalogDownloading;
+}
+async function loadCatalog() {
+  if (catalogLoading || catalogDownloading) return;
+  $('#catalog-result').textContent = '';
+  if (!catalogAvailable()) {
+    $('#catalog-status').textContent = 'GitHub 카탈로그는 데스크톱 앱에서 사용할 수 있습니다. 브라우저에서는 기본 샘플을 이용하세요.';
+    renderCatalogAuth(); renderCatalogCards(); return;
+  }
+  catalogLoading = true; renderCatalogCards();
+  $('#catalog-status').textContent = 'GitHub 카탈로그를 불러오는 중…';
+  $('#catalog-status').classList.remove('catalog-warning');
+  const results = await Promise.allSettled([catalogCall('list'), catalogCall('auth-status')]);
+  if (results[1].status === 'fulfilled') catalogAuth = results[1].value;
+  const result = results[0];
+  if (result.status === 'fulfilled') {
+    catalogData = result.value;
+    const cached = catalogData.offline;
+    $('#catalog-status').textContent = cached ? `오프라인 캐시 · ${dateLabel(catalogData.fetchedAt)}에 받은 목록입니다.${catalogData.warning ? ` ${catalogData.warning}` : ''}` : `${catalogData.manifest.entries.length}개 키맵 · ${dateLabel(catalogData.fetchedAt)} 확인`;
+    $('#catalog-status').classList.toggle('catalog-warning', Boolean(cached));
+  } else {
+    $('#catalog-status').textContent = `${explain(result.reason)}${catalogData ? ' 이전에 불러온 목록을 표시합니다.' : ''}`;
+    $('#catalog-status').classList.add('catalog-warning');
+  }
+  catalogLoading = false; renderCatalogAuth(); renderCatalogCards();
+}
+async function openPresets() {
+  if (!$('#presets-dialog').open) $('#presets-dialog').showModal();
+  setCatalogTab('github');
+  $('#presets-list').textContent = '샘플을 불러오는 중…';
+  const sampleWork = (async () => {
+    try {
+      const response = await fetch('./presets/index.json');
+      if (!response.ok) throw new Error('샘플 목록을 불러오지 못했습니다.');
+      presets = await response.json();
+      if (!Array.isArray(presets)) throw new Error('샘플 목록 형식이 올바르지 않습니다.');
+      $('#presets-list').innerHTML = presets.map((item,index) => `<article class="catalog-card"><div class="catalog-card-meta"><span>기본 샘플</span></div><h3>${escapeHTML(item.name)}</h3><p title="${escapeHTML(item.description)}">${escapeHTML(item.description)}</p><div class="catalog-card-actions"><button class="small" data-preset-index="${index}">편집기로 열기</button></div></article>`).join('');
+    } catch (error) { $('#presets-list').textContent = explain(error); }
+  })();
+  await Promise.allSettled([loadCatalog(), sampleWork]);
+}
+function preserveAndOpen(incoming) {
+  const next = validateProfile(incoming);
+  next.id = createProfile().id;
+  // Save the current editor first. If any subsequent save fails it remains recoverable.
+  const current = validateProfile({...profile, name:$('#profile-name').value.trim()});
+  saveToLibrary(current);
+  saveToLibrary(next);
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(next));
+  clearTimeout(draftTimer);
+  profile = next; layer = 0; selected = 1; notice = '';
+  fullRender(); persistDraft();
+}
+function requireCatalogDevice(entry, expectedDevice = device) {
+  if (!device || device !== expectedDevice) throw new Error('키보드 연결이 변경되었습니다. 다시 연결한 뒤 적용하세요.');
+  if (!device.compatible) throw new Error(device.compatibilityReason || '지원되는 키보드를 연결하세요.');
+  if (device.modelId !== entry.modelId) throw new Error('연결한 키보드와 키맵의 모델이 다릅니다.');
+}
+async function useCatalogEntry(id, apply) {
+  if (catalogDownloading || busy || catalogLoading) return;
+  const entry = catalogData?.manifest.entries.find(item => item.id === id);
+  if (!entry) throw new Error('카탈로그를 새로고침한 뒤 다시 선택하세요.');
+  const targetDevice = device;
+  if (apply) requireCatalogDevice(entry, targetDevice);
+  catalogDownloading = true; renderCatalogCards();
+  $('#catalog-result').textContent = `${entry.name} 다운로드 중…`;
+  const work = async () => {
+    const result = await catalogCall('download', {id});
+    const next = validateProfile(result.profile);
+    if (next.modelId !== entry.modelId) throw new Error('목록과 다운로드한 키맵 모델이 다릅니다. 카탈로그를 새로고침하세요.');
+    if (apply) requireCatalogDevice(entry, targetDevice);
+    else if (busy) throw new Error('장치 작업이 끝난 뒤 편집기로 다시 열어 주세요.');
+    preserveAndOpen(next);
+    if (apply) {
+      // No await between the final device check and the existing apply pipeline.
+      requireCatalogDevice(entry, targetDevice);
+      const applied = await targetDevice.apply(profile, {persistBackup,onProgress:progress});
+      requireCatalogDevice(entry, targetDevice);
+      await refreshSnapshot();
+      progress(`${applied.changed}개 동작 적용 · 재읽기 확인`);
+    }
+    const message = apply ? '키맵을 적용하고 다시 읽어 확인했습니다.' : '키맵을 내 보관함에 저장하고 편집기로 열었습니다.';
+    $('#catalog-result').textContent = message;
+    $('#presets-dialog').close(); toast(message);
+  };
+  try {
+    if (apply) await withDeviceWork(async () => {
+      try { await work(); } catch (error) { $('#catalog-result').textContent = explain(error); throw error; }
+    });
+    else await work();
+  } catch (error) { $('#catalog-result').textContent = explain(error); toast(explain(error), true); }
+  finally { catalogDownloading = false; renderCatalogCards(); }
+}
+async function openCatalogSettings() {
+  $('#catalog-token').value = ''; $('#catalog-token-error').textContent = '';
+  if (catalogAvailable()) {
+    try { catalogAuth = await catalogCall('auth-status'); } catch (error) { $('#catalog-token-error').textContent = explain(error); }
+  }
+  renderCatalogAuth();
+  $('#catalog-save-token').disabled = !catalogAvailable();
+  $('#catalog-clear-token').disabled = !catalogAvailable();
+  $('#catalog-token').disabled = !catalogAvailable();
+  $('#catalog-token-dialog').showModal();
+}
+function setCatalogAuthBusy(value) {
+  catalogAuthBusy = value;
+  $('#catalog-save-token').disabled = value;
+  $('#catalog-clear-token').disabled = value;
+  $('#catalog-token').disabled = value;
+}
+async function clearCatalogToken() {
+  if (catalogAuthBusy) return;
+  $('#catalog-token').value = ''; $('#catalog-token-error').textContent = '';
+  setCatalogAuthBusy(true);
+  try { catalogAuth = await catalogCall('clear-token'); renderCatalogAuth(); }
+  catch (error) { $('#catalog-token-error').textContent = explain(error); }
+  finally { setCatalogAuthBusy(false); }
+}
+$('#catalog-token-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (catalogAuthBusy) return;
+  const token = $('#catalog-token').value.trim();
+  $('#catalog-token').value = ''; $('#catalog-token-error').textContent = '';
+  if (!token) return;
+  setCatalogAuthBusy(true);
+  try {
+    catalogAuth = await catalogCall('save-token', {token}); renderCatalogAuth();
+    $('#catalog-token-dialog').close(); await loadCatalog();
+  } catch (error) { $('#catalog-token-error').textContent = explain(error); }
+  finally { $('#catalog-token').value = ''; setCatalogAuthBusy(false); }
+});
+for (const eventName of ['close','cancel']) $('#catalog-token-dialog').addEventListener(eventName, () => { $('#catalog-token').value = ''; });
+for (const id of ['catalog-search','catalog-platform','catalog-model']) $(`#${id}`).addEventListener(id === 'catalog-search' ? 'input' : 'change', renderCatalogCards);
+$('.catalog-tabs').addEventListener('keydown', event => {
+  if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
+  event.preventDefault();
+  const bundled = event.key === 'End' || (event.key !== 'Home' && $('#catalog-github-tab').getAttribute('aria-selected') === 'true');
+  setCatalogTab(bundled ? 'bundled' : 'github');
+  $(bundled ? '#catalog-bundled-tab' : '#catalog-github-tab').focus();
+});
+$('#presets-dialog').addEventListener('click', async event => {
+  const tab = event.target.closest('[data-catalog-tab]');
+  if (tab) { setCatalogTab(tab.dataset.catalogTab); return; }
+  const remote = event.target.closest('[data-catalog-open],[data-catalog-apply]');
+  if (remote && !remote.disabled) {
+    try { await useCatalogEntry(remote.dataset.catalogOpen || remote.dataset.catalogApply, Boolean(remote.dataset.catalogApply)); }
+    catch (error) { $('#catalog-result').textContent = explain(error); toast(explain(error),true); }
+    return;
+  }
+  const target = event.target.closest('[data-preset-index]');
+  if (!target || busy || catalogDownloading) return;
   try {
     const item = presets[Number(target.dataset.presetIndex)];
     const url = new URL(item.file,new URL('./presets/',location.href));
     if (url.origin !== location.origin || !url.pathname.startsWith(new URL('./presets/',location.href).pathname)) throw new Error('잘못된 템플릿 파일 경로입니다.');
     const response = await fetch(url); if (!response.ok) throw new Error('템플릿 파일을 읽지 못했습니다.');
     const text = await response.text(); if (new Blob([text]).size > MAX_FILE) throw new Error('템플릿 파일이 너무 큽니다.');
-    profile = validateProfile(JSON.parse(text)); profile.id = createProfile().id; layer = 0; selected = 1;
-    notice = '';
-    fullRender(); persistDraft(); $('#presets-dialog').close(); toast('템플릿을 열었습니다.');
-  } catch (error) { toast(explain(error),true); }
+    if (busy || catalogDownloading) return;
+    preserveAndOpen(JSON.parse(text));
+    $('#presets-dialog').close(); toast('샘플을 편집기로 열었습니다.');
+  } catch (error) { $('#catalog-result').textContent = explain(error); toast(explain(error),true); }
 });
 
 if ('hid' in navigator) navigator.hid.addEventListener('disconnect', event => { if (device && (!device.hidDevice || event.device === device.hidDevice)) { device = null; deviceSnapshot = null; $('#lighting-dialog').close(); renderBoard(); renderEditor(); updateDeviceUI(); progress('USB 연결이 끊어졌습니다. 케이블을 확인한 뒤 다시 연결하세요.'); } });

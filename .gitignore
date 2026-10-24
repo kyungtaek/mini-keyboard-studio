@@ -12,4 +12,3 @@ evidence/
 .env
 .env.*
 *.log
-catalog-auth*

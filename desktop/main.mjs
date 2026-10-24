@@ -1,6 +1,8 @@
-import {app,BrowserWindow,Menu,Tray,nativeImage,protocol,ipcMain,dialog,shell,screen,session,clipboard} from 'electron';
+import {app,BrowserWindow,Menu,Tray,nativeImage,protocol,ipcMain,dialog,shell,screen,session,clipboard,safeStorage} from 'electron';
 import {readFile,writeFile,mkdir,rename,appendFile,realpath} from 'node:fs/promises';
 import path from 'node:path';
+import {CatalogService} from './catalog-service.mjs';
+import {CatalogAuth,validateCatalogInvocation} from './catalog-auth.mjs';
 import {createCompanionApi} from './local-api.mjs';
 import {CompanionGateway} from '../scripts/companion-api.mjs';
 import {APP_URL,assetName,isStudioDocument,validateInvocation,sharedKeymapURL} from './policy.mjs';
@@ -56,6 +58,9 @@ if(!single){app.quit();}else{
  app.whenReady().then(async()=>{
   await mkdir(dataDir,{recursive:true,mode:0o700});
   try{settings=JSON.parse(await readFile(settingsFile,'utf8'));}catch(error){if(error.code!=='ENOENT'){await log(`Settings read failed: ${error.message}`);throw error;}}
+  const catalogAuth=new CatalogAuth({dataDir,safeStorage});
+  const catalog=new CatalogService({cacheDir:path.join(dataDir,'catalog'),getToken:()=>catalogAuth.getToken()});
+  let authMutation=false;
   gateway=new CompanionGateway(root,app.isPackaged?{cwd:dataDir,executable:path.join(process.resourcesPath,'hid','mini-keyboard-hid'),args:[],backupDir:path.join(dataDir,'companion-backups')}:{backupDir:path.join(dataDir,'companion-backups')});
   protocol.handle('mini-keyboard',async request=>{
    try{
@@ -74,6 +79,23 @@ if(!single){app.quit();}else{
    if(quitting)throw Error('앱이 종료 중입니다.');
    validateInvocation({url:event.senderFrame?.url,mainFrame:event.senderFrame===window.webContents.mainFrame,senderId:event.sender.id},window.webContents.id,command,args);
    const result=await gateway.call(command,args);return result;
+  });
+  ipcMain.handle('mini:catalog',async(event,command,args={})=>{
+   if(quitting)throw Error('앱이 종료 중입니다.');
+   validateInvocation({url:event.senderFrame?.url,mainFrame:event.senderFrame===window.webContents.mainFrame,senderId:event.sender.id},window.webContents.id,'status',{});
+   validateCatalogInvocation(command,args);
+   if(command==='list')return catalog.list();
+   if(command==='download')return catalog.download(args.id);
+   if(command==='auth-status')return catalogAuth.status();
+   if(authMutation)throw Error('GitHub 인증을 변경 중입니다.');
+   authMutation=true;
+   try{
+    if(command==='clear-token')return await catalogAuth.clear();
+    // Verify repository access before replacing the previous encrypted credential.
+    const verifier=new CatalogService({cacheDir:path.join(dataDir,'catalog-auth-check'),getToken:async()=>args.token});
+    await verifier.request('/git/ref/heads/main',128*1024);
+    return await catalogAuth.save(args.token);
+   }finally{authMutation=false;}
   });
   ipcMain.handle('mini:copy-keymap',(event,url)=>{
    validateInvocation({url:event.senderFrame?.url,mainFrame:event.senderFrame===window.webContents.mainFrame,senderId:event.sender.id},window.webContents.id,'status',{});
