@@ -1,5 +1,6 @@
 import { createProfile, validateProfile, actionLabel, encodeShare, decodeShare, saveToLibrary, loadLibrary, deleteFromLibrary } from './profile.js';
 import { connectDevice } from './device.js';
+import { toProfileActions,hasCalibratedMapping } from './action-mapping.js';
 import { companionCall } from './companion.js';
 import { validateBackup, decodeAction, fromHex } from './protocol.js';
 import { MODELS, getModel, gridActionIds, actionCount } from './models.js';
@@ -125,7 +126,9 @@ function boardValue(id) {
   return {draft,current,changed,label:draft.type==='preserve' ? (current ? shortLabel(current) : '·') : shortLabel(draft),title:current ? `현재: ${currentLabel(current)}${changed?` / 편집: ${getLabel(draft)}`:''}` : getLabel(draft)};
 }
 function installSnapshot(backup) {
-  deviceSnapshot = {modelId:backup.modelId || device?.modelId || 'mini-16x3',actions:backup.layers.map(records=>records.map(raw=>{try{return decodeAction(fromHex(raw));}catch{return {type:'preserve'};}}))};
+  const modelId=backup.modelId || device?.modelId || 'mini-16x3';
+  const calibrated=hasCalibratedMapping(backup);
+  deviceSnapshot = {modelId,calibrated,actions:backup.layers.map(records=>toProfileActions(modelId,records.map(raw=>{try{return decodeAction(fromHex(raw));}catch{return {type:'preserve'};}}),{calibrated}))};
 }
 async function refreshSnapshot() { installSnapshot(await device.readAll()); renderBoard(); renderEditor(); }
 

@@ -32,8 +32,7 @@ export function gridActionIds(modelOrId, rotation = 0) {
   if (![0, 90, 180, 270].includes(rotation)) throw new Error('회전은 0, 90, 180, 270도 중에서 선택해 주세요.');
   if (!Number.isSafeInteger(model.rows) || model.rows < 1 || !Number.isSafeInteger(model.columns) || model.columns < 1) throw new Error('키보드 모델의 행과 열 구성이 올바르지 않습니다.');
   if (model.rows * model.columns !== model.keys) return null;
-// The 16-key firmware IDs are row-major at 0 degrees. The former
-  // bottom-up column layout was contradicted by physical input measurement.
+  // Stable logical editor slots. USB scan IDs are mapped separately at I/O.
   let grid = Array.from({ length: model.rows }, (_, row) => Array.from({ length: model.columns }, (_, column) => (
     row * model.columns + column + 1
   )));

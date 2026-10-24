@@ -17,7 +17,7 @@ class FakeHID extends EventTarget{
 test('apply saves complete backup before writes, verifies all records, and does not rewrite preserve slots',async()=>{
  const hid=new FakeHID(),d=new MiniKeyboard(hid);await d.initialize();const p=createProfile();p.layers[1].actions[4]={type:'key',keys:['F13']};
  let saved;const result=await d.apply(p,{persistBackup:async b=>{assert.equal(hid.writes.filter(x=>x[0]===253).length,0);saved=b;}});
- assert.equal(result.changed,1);assert.equal(hid.layers[1][4][9],104);assert.equal(saved.layers.flat().length,75);
+ assert.equal(result.changed,1);assert.equal(hid.layers[1][13][9],104);assert.equal(saved.layers.flat().length,75);
  assert.equal(hid.writes.filter(x=>x[0]===253&&x[1]!==254).length,2);
  assert.equal(hid.writes.some(x=>x[0]===252),false);
 });
@@ -73,4 +73,23 @@ test('media and rollback restore timing and inactive triples on firmware that co
  const p=createProfile();p.layers[0].actions[18]={type:'media',key:'VOLUME_UP'};p.layers[1].actions[19]={type:'key',keys:['B']};
  await d.apply(p,{persistBackup:async()=>{}});assert.equal(hid.layers[0][18][15],29);
  await d.restore(before,{persistBackup:async()=>{}});assert.deepEqual((await d.readAll()).layers,before.layers);
+});
+
+
+test('top-knob placement writes each logical key to its calibrated physical wire slot and imports back',async()=>{
+ const hid=new FakeHID(),d=new MiniKeyboard(hid);await d.initialize();
+ const original=await d.readAll();const profile=createProfile();profile.rotation=270;
+ profile.layers[0].actions=profile.layers[0].actions.map((action,index)=>index<16?{type:'key',keys:[String.fromCharCode(65+index)]}:action);
+ await d.apply(profile,{persistBackup:async()=>{}});
+ // Physical scan IDs at knobs-top run left-to-right in raw record order.
+ const expected=['D','H','L','P','C','G','K','O','B','F','J','N','A','E','I','M'];
+ assert.deepEqual(hid.layers[0].slice(0,16).map(record=>String.fromCharCode(65+record[9]-4)),expected);
+ assert.deepEqual(hid.layers[0].map(record=>record[2]),Array.from({length:25},(_,i)=>i+1));
+ assert.deepEqual(hid.layers[0].slice(16),original.layers[0].slice(16).map(hex=>Uint8Array.from(hex.match(/../g).map(byte=>parseInt(byte,16)))));
+ const backup=await d.readAll(),imported=await profileFromBackup(backup);
+ assert.deepEqual(imported.layers[0].actions.slice(0,16),profile.layers[0].actions.slice(0,16));
+ const unchanged=await d.apply(imported,{persistBackup:async()=>{throw Error('unchanged profile must not write');}});
+ assert.equal(unchanged.changed,0);
+ await d.restore(original,{persistBackup:async()=>{}});
+ assert.deepEqual((await d.readAll()).layers,original.layers);
 });

@@ -1,6 +1,7 @@
 import {VID,PID,outputPayload,normalizeInput,encodeAction,decodeAction,validateRecords,createBackup,validateBackup,toHex} from './protocol.js';
 import {createProfile,validateProfile} from './profile.js';
 import {actionCount,getModel} from './models.js';
+import {toProfileActions,toDeviceActions,hasCalibratedMapping} from './action-mapping.js';
 import {isMiniKeyboard,matchFirmware,deviceFilters} from './registry.js';
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const same=(a,b)=>toHex(a.slice(2,51))===toHex(b.slice(2,51));
@@ -120,7 +121,7 @@ export class MiniKeyboard{
   if(profile.modelId!==this.modelId)throw Error('키맵과 연결된 장치의 모델이 다릅니다.');
   return this.exclusive(async()=>{
    const before=await this.capture();
-   const after=before.map((layer,l)=>layer.map((r,i)=>encodeAction(r,profile.layers[l].actions[i])));
+   const after=before.map((layer,l)=>{const actions=toDeviceActions(this.modelId,profile.layers[l].actions,{calibrated:hasCalibratedMapping({...this.backupInfo,identity:this.identity})});return layer.map((r,i)=>encodeAction(r,actions[i]));});
    return this.transaction(before,after,options);
   });
  }
@@ -150,10 +151,10 @@ export async function connectDevice({transport='webhid'}={}){
 }
 export async function profileFromBackup(backup,name='기기에서 읽은 키맵'){
  const layers=await validateBackup(backup,backup.identity);const p=createProfile(name,backup.modelId||'mini-16x3');
- p.layers.forEach((layer,l)=>{layer.actions=layers[l].map(r=>{
+ p.layers.forEach((layer,l)=>{layer.actions=toProfileActions(p.modelId,layers[l].map(r=>{
   const action=decodeAction(r);
   // Preserve records carrying vendor fields or timing modes not represented by
   // our portable schema instead of silently changing them on the next apply.
   return same(encodeAction(r,action),r)?action:{type:'preserve'};
- });});return validateProfile(p);
+ }),{calibrated:hasCalibratedMapping(backup)});});return validateProfile(p);
 }
