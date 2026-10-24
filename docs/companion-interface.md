@@ -242,3 +242,9 @@ The renderer checks device path and serial before key apply, sends the expected 
 ### Visible activation observed on 2026-10-25
 
 The vendor-saved mode4 and our mode1/all-blue profile were visually observed after USB power reconnect; their raw saved replies and 75 key records survived the cycle exactly. Restoring the prior colors while mode1 was active changed the visible colors immediately without reconnect. A universal reconnect requirement is therefore false. Mode activation latching is a hypothesis, not established firmware internals. The app records `lightingModeChanged` relative to fresh stored-mode readback, not a probe of the active effect. Only mode-change feedback conditionally suggests reconnect if the visible effect does not change. Readback verification continues to describe stored bytes, not current light output.
+
+### USB handle refresh (0.5.2)
+
+An explicit idle `open` probes the existing native handle with identification. On a transport failure it closes the stale handle and re-enumerates exactly one matching VID/PID/nonempty serial, then verifies the original identity. USB path changes are allowed only after this binding check. It never replays a failed configuration command. A changed identity response is rejected without switching devices. Active/uncertain key writes block reopening. LED baselines, rules and journal evidence survive reopen; pending modified LED layers require explicit recovery. Offline close does not claim unrecovered LEDs were restored.
+
+The renderer refreshes before device work and LED control, adopts a new path only after matching serial and identity, and presents actionable USB reconnect errors instead of the Electron invocation wrapper. The palette includes black/off plus15colors, retaining the former dark-red choice for existing v4 file imports only.

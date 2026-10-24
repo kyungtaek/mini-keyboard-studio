@@ -160,15 +160,36 @@ class Bridge:
 
     def open(self, path_hex=None):
         self._unleased()
-        if self.handle_device is not None:
-            if path_hex is None or path_hex == self.device['pathHex']:
-                return self.device
-            raise ValueError('close the selected device before selecting another')
-        candidates = self._enumerate()
+        if self.key_write_pending:
+            raise ValueError('an uncertain key write must be recovered before reopening USB')
         if path_hex is not None:
             if not isinstance(path_hex, str) or not re.fullmatch(r'(?:[0-9a-fA-F]{2})+', path_hex):
                 raise ValueError('pathHex must encode an enumerated device path')
-            candidates = [item for item in candidates if self._info(item)['pathHex'] == path_hex.lower()]
+            path_hex = path_hex.lower()
+        if self.device is not None:
+            if path_hex is not None and path_hex != self.device['pathHex']:
+                raise ValueError('close the selected device before selecting another')
+            original = self.device
+            if self.handle_device is None:
+                return self._reopen_selected(original)
+            try:
+                response = self._wire(padded(251, 251, 251), 1)[0]
+            except Exception:
+                # Rebinding is limited to an explicit idle open. Never replay a
+                # failed configuration operation or recover during a key lease.
+                return self._reopen_selected(original)
+            if response[:2] != [3, 251] or response[2:5] != original['identity']:
+                # An identity mismatch is not a transport failure and must never
+                # trigger an automatic second open under another device identity.
+                self.handle_device.close()
+                self.handle_device = None
+                self.applied.clear()
+                self.lighting_recovery_required |= bool(self.modified_layers)
+                raise ValueError('selected USB device identity changed; reconnect the original keyboard')
+            return self.device
+        candidates = self._enumerate()
+        if path_hex is not None:
+            candidates = [item for item in candidates if self._info(item)['pathHex'] == path_hex]
         if len(candidates) != 1:
             raise ValueError('select exactly one vendor interface using its pathHex')
         item = candidates[0]
@@ -185,6 +206,42 @@ class Bridge:
             self.handle_device.close()
             self.handle_device, self.device = None, None
             raise
+
+    def _reopen_selected(self, original):
+        if self.handle_device is not None:
+            try:
+                self.handle_device.close()
+            finally:
+                self.handle_device = None
+        self.applied.clear()
+        self.lighting_recovery_required |= bool(self.modified_layers)
+        serial = original.get('serialNumber')
+        if not isinstance(serial, str) or not serial.strip():
+            raise ValueError('USB reconnect requires the original nonempty serial; disconnect and select the device explicitly')
+        candidates = [item for item in self._enumerate()
+                      if item.get('vendor_id') == original['vendorId']
+                      and item.get('product_id') == original['productId']
+                      and item.get('serial_number') == serial]
+        if len(candidates) != 1:
+            raise ValueError('USB reconnect requires exactly one interface for the original keyboard serial; reconnect that device')
+        item = candidates[0]
+        try:
+            self.handle_device = self.transport.open_path(item['path'])
+            response = self._wire(padded(251, 251, 251), 1)[0]
+            if response[:2] != [3, 251] or response[2:5] != original['identity']:
+                raise ValueError('reconnected USB device identity does not match the original keyboard')
+            self.device = {**self._info(item), 'identity': response[2:5]}
+            # Preserve baseline files, journal, rules and recovery state. Loading
+            # a new baseline here could mistake uncertain modified LEDs for originals.
+            return self.device
+        except Exception as error:
+            if self.handle_device is not None:
+                try:
+                    self.handle_device.close()
+                finally:
+                    self.handle_device = None
+            self.device = original
+            raise ValueError(f'USB reconnect failed without configuration replay: {error}') from error
 
     def _connected(self):
         if self.handle_device is None:
@@ -735,8 +792,8 @@ class Bridge:
         return {'restored': True, 'verified': True, 'rulesEnabled': False}
 
     def status(self):
-        writable = self._key_geometry()[2] if self.device else False
-        lighting = self._lighting_supported()
+        writable = self._key_geometry()[2] if self.handle_device is not None else False
+        lighting = self.handle_device is not None and self._lighting_supported()
         return {'connected': self.handle_device is not None, 'device': self.device,
                 'rulesEnabled': self.enabled, 'lastEvent': self.last_event, 'lastResult': self.last_result,
                 'leaseActive': self.lease is not None, 'keyBackupStored': self.key_backup_stored,
@@ -754,6 +811,13 @@ class Bridge:
         if self.lease is not None:
             # An explicit close checks its owner in handle(); daemon shutdown owns cleanup.
             result['keyRecovery'] = self.abort(self.lease)
+        if self.handle_device is None:
+            if self.modified_layers:
+                return {**result, 'lightingRestored': False, 'restorationError': 'USB is disconnected; reconnect the original keyboard and run restoreLighting', 'baselinePath': self.baseline_path}
+            self.device = None
+            self.baseline, self.baseline_path = None, None
+            self.batch_session_baseline = None
+            self.applied.clear()
         if self.handle_device is not None:
             try:
                 if self.modified_layers:

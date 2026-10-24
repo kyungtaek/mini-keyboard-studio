@@ -23,6 +23,7 @@ class FakeHID:
     def __init__(self, identity=(16, 3, 11)):
         self.identity = identity
         self.serial = 'FAKE-SERIAL-1'
+        self.stale = False
         self.writes = []
         self.keys = [[packet(3, 250, action, layer, 1) for action in range(1, 26)] for layer in range(1, 4)]
         self.corrupt_key_read = False
@@ -46,6 +47,8 @@ class FakeHID:
 
     def write(self, report):
         self.writes.append(list(report))
+        if self.stale:
+            return -1
         if len(report) != 65 or report[0] != 3:
             raise AssertionError('hidapi requires report ID + 64 bytes')
         if report[1:4] == [251, 251, 251]:
@@ -79,6 +82,34 @@ class FakeHID:
 
     def close(self):
         self.closed = True
+
+
+class ReplugTransport:
+    def __init__(self):
+        self.current = FakeHID()
+        self.path = b'fake-vendor'
+        self.opens = []
+        self.duplicate = False
+
+    def enumerate(self):
+        info = self.current.enumerate()[0]
+        info['path'] = self.path
+        return [info, dict(info, path=b'duplicate')] if self.duplicate else [info]
+
+    def open_path(self, path):
+        if path != self.path:
+            raise AssertionError('unexpected selected path')
+        self.opens.append(path)
+        return self.current
+
+    def replug(self, path=b'fake-vendor', serial='FAKE-SERIAL-1', identity=(16, 3, 11)):
+        old = self.current
+        old.stale = True
+        self.current = FakeHID(identity)
+        self.current.serial = serial
+        self.current.lighting = [layer[:] for layer in old.lighting]
+        self.path = path
+        return old
 
 
 class CompanionTests(unittest.TestCase):
@@ -638,6 +669,126 @@ class CompanionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.command('begin', lease='other', expectedDevice=dict(binding, serialNumber=None))
         self.assertFalse(self.bridge.status()['leaseActive'])
+
+    def test_idle_open_probes_healthy_handle_and_reopens_stale_same_device(self):
+        for path in (b'fake-vendor', b'new-vendor-path'):
+            with self.subTest(path=path):
+                transport = ReplugTransport()
+                bridge = Bridge(transport=transport, backup_dir=self.temp.name, delay=0)
+                bridge.handle({'command': 'open'})
+                before = len(transport.current.writes)
+                bridge.handle({'command': 'open'})
+                self.assertEqual(len(transport.current.writes), before + 1)
+                self.assertEqual(len(transport.opens), 1)
+                old = transport.replug(path=path)
+                info = bridge.handle({'command': 'open'})
+                self.assertEqual(info['pathHex'], path.hex())
+                self.assertEqual(info['identity'], [16, 3, 11])
+                self.assertTrue(old.closed)
+                self.assertEqual(len(transport.opens), 2)
+                self.assertTrue(all(report[1:4] == [251, 251, 251] for report in transport.current.writes))
+
+    def test_stale_reopen_rejects_other_serial_identity_or_duplicate_interface(self):
+        for change in ('serial', 'identity', 'duplicate', 'empty_serial'):
+            with self.subTest(change=change):
+                transport = ReplugTransport()
+                bridge = Bridge(transport=transport, backup_dir=self.temp.name, delay=0)
+                if change == 'empty_serial':
+                    transport.current.serial = ''
+                bridge.handle({'command': 'open'})
+                transport.replug(serial='OTHER' if change == 'serial' else 'FAKE-SERIAL-1',
+                                 identity=(12, 3, 11) if change == 'identity' else (16, 3, 11))
+                transport.duplicate = change == 'duplicate'
+                with self.assertRaises(ValueError):
+                    bridge.handle({'command': 'open'})
+                self.assertFalse(bridge.status()['connected'])
+                self.assertFalse(any(report[1] in (253, 254) for report in transport.current.writes))
+
+    def test_stale_reopen_keeps_original_led_recovery_and_rules(self):
+        transport = ReplugTransport()
+        bridge = Bridge(transport=transport, backup_dir=self.temp.name, delay=0)
+        bridge.handle({'command': 'open'})
+        bridge.handle({'command': 'configure', 'enabled': True, 'rules': [self.rule()]})
+        bridge.handle({'command': 'state', 'event': {'version': 1, 'source': 'manual', 'state': 'working'}})
+        baseline, baseline_path = bridge.baseline, bridge.baseline_path
+        journal = bridge._journal_path().read_text()
+        transport.replug(path=b'new-vendor-path')
+        bridge.handle({'command': 'open'})
+        self.assertEqual(bridge.baseline, baseline)
+        self.assertEqual(bridge.baseline_path, baseline_path)
+        self.assertEqual(bridge._journal_path().read_text(), journal)
+        self.assertTrue(bridge.lighting_recovery_required)
+        self.assertTrue(bridge.enabled)
+        self.assertEqual(bridge.rules[0]['state'], 'working')
+        with self.assertRaisesRegex(ValueError, 'restoreLighting'):
+            bridge.handle({'command': 'setLighting', 'layer': 0, 'mode': 1, 'color': '#112233'})
+        self.assertFalse(any(report[1] == 254 for report in transport.current.writes))
+        bridge.handle({'command': 'restoreLighting'})
+        self.assertEqual(transport.current.lighting[0][3:6], [1, 2, 3])
+
+    def test_open_never_rebinds_active_or_uncertain_key_transaction(self):
+        self.open()
+        before = len(self.hid.writes)
+        self.command('begin', lease='owner')
+        with self.assertRaises(ValueError):
+            self.open()
+        self.command('end', lease='owner')
+        self.bridge.key_write_pending = True
+        with self.assertRaises(ValueError):
+            self.open()
+        self.assertEqual(len(self.hid.writes), before)
+
+    def test_configuration_failure_does_not_reopen_or_replay_on_new_handle(self):
+        transport = ReplugTransport()
+        bridge = Bridge(transport=transport, backup_dir=self.temp.name, delay=0)
+        bridge.handle({'command': 'open'})
+        bridge.handle({'command': 'setLighting', 'layer': 0, 'mode': 1, 'color': '#123456'})
+        transport.replug()
+        with self.assertRaises(ValueError):
+            bridge.handle({'command': 'setLighting', 'layer': 0, 'mode': 2, 'color': '#aabbcc'})
+        self.assertEqual(len(transport.opens), 1)
+        self.assertEqual(transport.current.writes, [])
+        self.assertTrue(bridge.lighting_recovery_required)
+
+    def test_closed_handle_exception_rebinds_but_identity_mismatch_does_not(self):
+        transport = ReplugTransport()
+        bridge = Bridge(transport=transport, backup_dir=self.temp.name, delay=0)
+        bridge.handle({'command': 'open'})
+        old = transport.replug(path=b'new-vendor-path')
+        def closed_write(report):
+            raise ValueError('device not open')
+        old.write = closed_write
+        self.assertEqual(bridge.handle({'command': 'open'})['pathHex'], b'new-vendor-path'.hex())
+        self.assertEqual(len(transport.opens), 2)
+        self.assertFalse(any(report[1] in (253, 254) for report in transport.current.writes))
+        transport.current.identity = (12, 3, 11)
+        with self.assertRaisesRegex(ValueError, 'identity changed'):
+            bridge.handle({'command': 'open'})
+        self.assertEqual(len(transport.opens), 2)
+        self.assertFalse(bridge.status()['connected'])
+
+    def test_failed_stale_rebind_retains_recovery_until_original_device_returns(self):
+        transport = ReplugTransport()
+        bridge = Bridge(transport=transport, backup_dir=self.temp.name, delay=0)
+        bridge.handle({'command': 'open'})
+        bridge.handle({'command': 'setLighting', 'layer': 0, 'mode': 1, 'color': '#123456'})
+        baseline_path = bridge.baseline_path
+        transport.replug(serial='OTHER')
+        with self.assertRaises(ValueError):
+            bridge.handle({'command': 'open'})
+        status = bridge.status()
+        self.assertFalse(status['connected'])
+        self.assertFalse(status['capabilities']['lightingWrite'])
+        self.assertTrue(status['lightingRecoveryRequired'])
+        self.assertEqual(status['baselinePath'], baseline_path)
+        result = bridge.handle({'command': 'close'})
+        self.assertFalse(result['lightingRestored'])
+        self.assertEqual(result['baselinePath'], baseline_path)
+        transport.replug(path=b'original-returned')
+        bridge.handle({'command': 'open'})
+        self.assertTrue(bridge.lighting_recovery_required)
+        bridge.handle({'command': 'restoreLighting'})
+        self.assertEqual(transport.current.lighting[0][3:6], [1, 2, 3])
 
     def test_daemon_output_one_response_per_input_without_logs(self):
         source = io.StringIO('{"id":1,"command":"status"}\n{"id":2,"command":"invalid"}\nnot json\n')

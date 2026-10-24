@@ -4,7 +4,7 @@ import { LED_PALETTE, normalizeLighting, resolveLighting } from '../src/lighting
 import { createProfile, validateProfile, encodeShare, decodeShare, saveToLibrary, loadLibrary } from '../src/profile.js';
 
 test('palette has 16 exact choices and lighting patches clone canonical values', () => {
-  assert.deepEqual(LED_PALETTE, ['#ff0000', '#ff8030', '#ffff30', '#00ff00', '#00ffff', '#0000ff', '#800080', '#8b0000', '#ffa500', '#ffff96', '#7dff00', '#008b8b', '#00008b', '#ff00ff', '#ff6666', '#ffc864']);
+  assert.deepEqual(LED_PALETTE, ['#ff0000', '#ff8030', '#ffff30', '#00ff00', '#00ffff', '#0000ff', '#800080', '#000000', '#ffa500', '#ffff96', '#7dff00', '#008b8b', '#00008b', '#ff00ff', '#ff6666', '#ffc864']);
   assert.equal(normalizeLighting(undefined, 'mini-16x3'), null);
   assert.equal(normalizeLighting(null, 'mini-3x1'), null);
   const patch = { mode: null, colors: Array(16).fill(null) };
@@ -21,13 +21,34 @@ test('lighting rejects unsupported colors, models, modes, properties and incompl
   for (const patch of [
     { ...valid, mode: -1 }, { ...valid, mode: 6 }, { ...valid, mode: '1' },
     { ...valid, colors: Array(15).fill(null) }, { ...valid, colors: Array(16) },
-    { ...valid, colors: Array(16).fill('#123456') }, { ...valid, colors: Array(16).fill('#000000') },
+    { ...valid, colors: Array(16).fill('#123456') }, { ...valid, colors: Array(16).fill('#010101') },
     { ...valid, colors: Array(16).fill(0) }, { ...valid, extra: true },
     { colors: valid.colors }, { mode: 1 }, Object.create(valid),
     JSON.parse('{"mode":1,"colors":[],"__proto__":{"polluted":true}}'),
   ]) assert.throws(() => normalizeLighting(patch, 'mini-16x3'), Error);
   assert.throws(() => normalizeLighting(valid, 'mini-3x1'), /지원/);
   assert.equal({}.polluted, undefined);
+});
+
+test('off is selectable and resolves to black while former dark red remains import-compatible only', () => {
+  assert.equal(LED_PALETTE.length, 16);
+  assert.equal(new Set(LED_PALETTE).size, 16);
+  assert.equal(LED_PALETTE.includes('#000000'), true);
+  assert.equal(LED_PALETTE.includes('#8b0000'), false);
+  const profile = createProfile('LED 끄기');
+  profile.layers[0].lighting = { mode: null, colors: Array(16).fill(null) };
+  profile.layers[0].lighting.colors[0] = '#000000';
+  profile.layers[0].lighting.colors[1] = '#8B0000';
+  const normalized = validateProfile(profile);
+  assert.equal(normalized.layers[0].lighting.colors[0], '#000000');
+  assert.equal(normalized.layers[0].lighting.colors[1], '#8b0000');
+  assert.deepEqual(decodeShare(encodeShare(profile)), normalized);
+  const current = { mode: 2, colors: Array(16).fill('#ff0000') };
+  const resolved = resolveLighting(normalized.layers[0].lighting, current);
+  assert.equal(resolved.colors[0], '#000000');
+  assert.equal(resolved.colors[1], '#8b0000');
+  assert.equal(resolved.colors[2], '#ff0000');
+  assert.equal(resolved.mode, 2);
 });
 
 test('resolution preserves untouched device settings, including readable colors outside the palette', () => {

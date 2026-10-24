@@ -420,7 +420,7 @@ function updateDeviceUI() {
 async function withDeviceWork(work) {
   if (!device?.compatible || busy) return;
   busy = true; updateDeviceUI();
-  try { await work(); }
+  try { await device.ensureConnected?.(); await work(); }
   catch (error) { deviceSnapshot = null; renderBoard(); renderEditor(); progress(explain(error)); toast(explain(error),true); }
   finally { busy = false; updateDeviceUI(); renderBackups(); }
 }
@@ -814,7 +814,7 @@ async function lightingWork(work,{propagate=false}={}) {
   busy=true;updateDeviceUI();
   $('#lighting-error').textContent='';
   document.querySelectorAll('#lighting-dialog button,#lighting-dialog input,#lighting-dialog select').forEach(control=>control.disabled=true);
-  try{await work();}
+  try{await device?.ensureConnected?.();await work();}
   catch(error){$('#lighting-preview').hidden=true;$('#lighting-error').textContent=explain(error);if($('#lighting-capability').textContent==='연결 확인 중'){$('#lighting-enabled').indeterminate=true;$('#lighting-capability').textContent='설정 확인 실패';}if(propagate)throw error;}
   finally{busy=false;updateDeviceUI();document.querySelectorAll('#lighting-dialog button,#lighting-dialog input,#lighting-dialog select').forEach(control=>control.disabled=false);$('#lighting-enabled').disabled=!ledWriteAllowed;}
 }

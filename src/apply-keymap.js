@@ -11,6 +11,7 @@ function expectedDevice(device,status){
 }
 export async function applyKeymap(device,value,{companionCall,persistBackup,onProgress=()=>{}}={}){
  const profile=validateProfile(value);
+ await device.ensureConnected?.();
  const requested=profile.layers.some(layer=>layer.lighting&&(layer.lighting.mode!==null||layer.lighting.colors.some(color=>color!==null)));
  if(!requested)return device.apply(profile,{persistBackup,onProgress});
  if(device.transport!=='companion'||typeof companionCall!=='function')throw Error('키맵의 LED 설정은 데스크톱 앱 장치 연결이 필요합니다.');

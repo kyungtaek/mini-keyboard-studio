@@ -16,5 +16,6 @@ test('LED UI exposes exactly sixteen preset color buttons, no freeform color inp
  assert.equal((html.match(/data-color-index=/g)||[]).length,16);
  assert(!html.includes('type="color"'));assert(!html.includes('applicationId'));
  assert.match(html,/USB.*재연결/);
+ assert.match(html,/data-key-led-color="#000000"[^>]*aria-label="LED 꺼짐"/);
  assert.equal(keyLightingHTML(createProfile(),0,17),'');
 });

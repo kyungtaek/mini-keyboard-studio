@@ -14,6 +14,7 @@ export function createLightingController({companionCall,getDevice,getBusy=()=>fa
   const target=getDevice();
   if(!target||target.transport!=='companion'||target.hidDevice?.opened===false)throw Error('보조앱으로 키보드를 연결하세요.');
   if(getBusy())throw Error('진행 중인 장치 작업이 끝난 뒤 설정하세요.');
+  await target.ensureConnected?.();
   const value=await companionCall('status');
   if(getBusy())throw Error('진행 중인 장치 작업이 끝난 뒤 설정하세요.');
   if(getDevice()!==target||!value.connected||(target.hidDevice?.pathHex&&target.hidDevice.pathHex!==value.device?.pathHex))throw Error('키보드 연결이 변경되었습니다. 다시 연결하세요.');

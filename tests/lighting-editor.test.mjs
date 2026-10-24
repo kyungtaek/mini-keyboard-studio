@@ -4,6 +4,12 @@ import {createLightingController} from '../src/lighting-editor.js';
 const board={transport:'companion',hidDevice:{opened:true,pathHex:'abcd'}};
 const supported={connected:true,device:{pathHex:'abcd'},capabilities:{lightingRead:true,lightingWrite:true},leaseActive:false};
 
+test('direct LED work refreshes a stale USB path before comparing status',async()=>{
+ const calls=[],target={transport:'companion',hidDevice:{opened:true,pathHex:'old'},ensureConnected:async()=>{calls.push('refresh');target.hidDevice.pathHex='new';}};
+ const controller=createLightingController({getDevice:()=>target,companionCall:async command=>{calls.push(command);return command==='status'?{...supported,device:{pathHex:'new'}}:{verified:true};}});
+ await controller.apply({layer:0,mode:1,colors:Array(16).fill('#000000')});assert.deepEqual(calls,['refresh','status','setLighting']);
+});
+
 test('direct setting uses dedicated command with normalized colors and no rule mutations',async()=>{
  const calls=[];
  const controller=createLightingController({getDevice:()=>board,companionCall:async(command,args)=>{calls.push({command,args});return command==='status'?supported:{verified:true,changed:true};}});

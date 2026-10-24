@@ -3,6 +3,25 @@ import assert from 'node:assert/strict';
 import {connectCompanionDevice} from '../src/companion.js';
 import {companionCall} from '../src/companion.js';
 
+test('refreshing a companion connection rebinds its path only to the same serial and identity',async()=>{
+ const oldBridge=globalThis.miniKeyboardDesktop,requests=[];
+ const binding={vendorId:0x514c,productId:0x8850,identity:[16,3,11],serialNumber:'board-A'};let info={...binding,pathHex:'old'};
+ globalThis.miniKeyboardDesktop={version:1,call:async(command,args)=>{requests.push(command);if(command==='open')return info;if(command==='exchange')return {reports:[{reportId:3,data:[251,16,3,11,...Array(59).fill(0)]}]};return {};}};
+ try{
+  const controller=await connectCompanionDevice();requests.length=0;
+  info={...binding,pathHex:'new'};await controller.ensureConnected();assert.equal(controller.hidDevice.pathHex,'new');assert.deepEqual(requests,['open']);
+  info={...binding,pathHex:'other',serialNumber:'board-B'};await assert.rejects(controller.ensureConnected(),/연결/);assert.equal(controller.hidDevice.pathHex,'new');
+  info={...binding,identity:[3,1,11],pathHex:'other'};await assert.rejects(controller.ensureConnected(),/연결/);assert.equal(controller.hidDevice.pathHex,'new');
+ }finally{if(oldBridge===undefined)delete globalThis.miniKeyboardDesktop;else globalThis.miniKeyboardDesktop=oldBridge;}
+});
+
+test('USB write failures are actionable without exposing the Electron invocation wrapper or retrying',async()=>{
+ const oldBridge=globalThis.miniKeyboardDesktop;let calls=0;
+ globalThis.miniKeyboardDesktop={version:1,call:async()=>{calls++;throw Error("Error invoking remote method 'mini:companion': Error: incomplete HID write (-1/65 bytes)");}};
+ try{await assert.rejects(companionCall('readLighting'),error=>error.code==='MINI_USB_DISCONNECTED'&&/USB/.test(error.message)&&/다시 연결/.test(error.message)&&!error.message.includes('invoking remote'));assert.equal(calls,1);}
+ finally{if(oldBridge===undefined)delete globalThis.miniKeyboardDesktop;else globalThis.miniKeyboardDesktop=oldBridge;}
+});
+
 test('desktop calls its isolated preload bridge without an HTTP server',async()=>{
  const oldFetch=globalThis.fetch,oldBridge=globalThis.miniKeyboardDesktop;
  globalThis.fetch=()=>{throw Error('HTTP must not be used');};
