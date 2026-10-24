@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {createProfile,validateProfile,encodeShare,decodeShare} from '../src/profile.js';
+test('v3 stores app association and human function labels through file/share validation',()=>{const p=createProfile();assert.equal(p.version,3);assert.equal(p.applicationId,null);p.applicationId='vscode-mac';p.layers[0].actions[0]={type:'key',keys:['META','P'],label:'파일 빠르게 열기'};assert.deepEqual(decodeShare(encodeShare(p)),validateProfile(p));});
+test('legacy profiles migrate with no application association and labels are bounded',()=>{const p=createProfile();const old=structuredClone(p);old.version=2;delete old.applicationId;assert.equal(validateProfile(old).applicationId,null);p.applicationId='../../bad';assert.throws(()=>validateProfile(p));p.applicationId=null;p.layers[0].actions[0]={type:'key',keys:['A'],label:'x'.repeat(81)};assert.throws(()=>validateProfile(p));});

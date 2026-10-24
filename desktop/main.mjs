@@ -129,7 +129,7 @@ if(!single){app.quit();}else{
   if(settings.apiEnabled)try{await toggleAPI(true);}catch(error){await reportError(error);}
   await window.loadURL(APP_URL);
   if(!process.argv.includes('--hidden')&&!readLogin().wasOpenedAtLogin)show();else app.dock?.hide();
-  refreshStatus=async()=>{if(quitting)return;try{lastStatus=await gateway.call('status');lastError='';buildMenu();await recordStatus();}catch(error){lastError=error.message;await log(error.message);await recordStatus();}};
+  refreshStatus=async()=>{if(quitting)return;try{lastStatus=await gateway.call('status');lastError='';buildMenu();await recordStatus();}catch(error){lastError=error.message;await log(error.message);await recordStatus().catch(statusError=>log('Status file write failed',{code:statusError.code},'warn'));}};
   await refreshStatus();poll=setInterval(refreshStatus,5000);
  }).catch(async error=>{await log('Application startup failed',{error});dialog.showErrorBox('앱을 시작하지 못했습니다',error.message);allowQuit=true;app.quit();});
 }

@@ -19,7 +19,7 @@ test('new profiles preserve every device slot and isolate nested values', () => 
   const second = createProfile();
   assert.equal(first.name, '스프린트 🎮');
   assert.equal(first.format, 'mini-keyboard-studio');
-  assert.equal(first.version, 2);
+  assert.equal(first.version, 3);
   assert.equal(first.modelId, 'mini-16x3');
   assert.equal(first.rotation, 0);
   assert.equal(first.layers.length, 3);
@@ -48,7 +48,7 @@ test('validation clones profiles and canonicalizes supported chords', () => {
 
 test('validation rejects unsupported versions, incomplete arrays and unsafe properties', () => {
   const mutations = [
-    value => { value.version = 3; }, value => { value.format = 'other'; },
+    value => { value.version = 4; }, value => { value.format = 'other'; },
     value => { value.layers.pop(); }, value => { value.layers[0].actions.pop(); },
     value => { value.layers[0].actions = Array(25); },
     value => { value.extra = 'unknown'; }, value => { value.layers[0].extra = true; },
@@ -76,7 +76,7 @@ test('strict v1 profiles migrate to the default model without reordering actions
   const legacy = legacyProfile();
   legacy.layers[2].actions[16] = { type: 'key', keys: ['F13'] };
   const migrated = validateProfile(legacy);
-  assert.equal(migrated.version, 2);
+  assert.equal(migrated.version, 3);
   assert.equal(migrated.modelId, 'mini-16x3');
   assert.equal(migrated.rotation, 0);
   assert.deepEqual(migrated.layers, legacy.layers);
@@ -90,13 +90,13 @@ test('strict v1 profiles migrate to the default model without reordering actions
   assert.equal(JSON.parse(storage.getItem(libraryKey))[0].version, 1);
 });
 
-test('every shipped sample validates as a default-model v2 profile', async () => {
+test('every shipped sample validates as a default-model v3 profile', async () => {
   const index = JSON.parse(await readFile(new URL('../presets/index.json', import.meta.url), 'utf8'));
   assert.ok(index.length > 0);
   for (const sample of index) {
     const raw = JSON.parse(await readFile(new URL(`../presets/${sample.file}`, import.meta.url), 'utf8'));
     const normalized = validateProfile(raw);
-    assert.equal(normalized.version, 2, sample.file);
+    assert.equal(normalized.version, 3, sample.file);
     assert.equal(normalized.modelId, 'mini-16x3', sample.file);
     assert.equal(normalized.rotation, 0, sample.file);
     assert.deepEqual(normalized.layers, raw.layers, sample.file);
