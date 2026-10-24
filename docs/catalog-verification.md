@@ -17,3 +17,12 @@
 ## 증거 경계
 
 카탈로그 샘플을 실제 연결된 키보드에 덮어쓰는 테스트는 하지 않는다. 실제 USB 장치의 기존 설정을 유지하며, 다운로드 후 적용 경로는 가짜 장치 검증과 기존 장치 백업·기록·재읽기 검증을 구분한다. 게임 샘플은 사용자가 게임 설정에 맞춰야 하는 바인딩 제안이다.
+
+## 설치된 앱과 CI
+
+- Apple Silicon 0.3.0 앱을 `~/Applications/Mini Keyboard Studio.app`에 업데이트하고 `codesign --verify --deep --strict` 성공, Info.plist 버전 0.3.0을 확인했다. 기존 HID 실행 파일을 동봉한다.
+- 실제 앱 화면에서 GitHub CLI 연결, 목록 6개, 모델·플랫폼·버전 카드, 다운로드·적용 버튼을 확인했다. VS Code 카드를 **편집기로 열기**로 다운로드하고 보관함에 새 항목이 생기며 편집기 이름이 바뀌는 것을 확인한 뒤 기존 Codex 작업으로 돌아왔다.
+- 앱 캐시에는 검증한 목록과 프로필만 권한 0600으로 저장되었다. 실제 토큰 등록은 수행하지 않았다.
+- 앱 상태 파일: packaged=true, version=0.3.0, connected=true, trayCreated=true, launch-at-login enabled. 기존 로컬 API 설정 유지. 창 높이 안의 카탈로그 대화상자를 확인했다.
+- 앱 CI: https://github.com/kyungtaek/mini-keyboard-studio/actions/runs/40095965239 성공. 카탈로그 CI: https://github.com/kyungtaek/mini-keyboard-keymap-catalog/actions/runs/40095491460 성공.
+- ZIP SHA-256: `843eacdc0083e426ca7e99c63f6f2c9a4db6ab91946a717f1e3cf08faa0a5bb4` (`dist/Mini Keyboard Studio-0.3.0-arm64-mac.zip`). 패키지는 로컬 ad-hoc 서명이며 공증 배포는 범위 밖이다.
