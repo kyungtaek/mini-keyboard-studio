@@ -32,3 +32,10 @@ test('backup requires exact complete layer, action and layer headers plus digest
  const missing=layers.map(x=>x.slice());missing[2].pop();assert.throws(()=>validateRecords(missing),/25/);
  const wrong=layers.map(x=>x.map(y=>y.slice()));wrong[1][2][3]=1;assert.throws(()=>validateRecords(wrong),/레이어/);
 });
+test('shorter assignments retain inactive firmware bytes while clearing active entries',()=>{
+ const r=raw(19);r[6]=3;r[9]=244;r[12]=242;r[15]=29;
+ const media=encodeAction(r,{type:'media',key:'VOLUME_UP'});
+ assert.equal(media[15],29);assert.equal(media[12],0);assert.deepEqual(decodeAction(media),{type:'media',key:'VOLUME_UP'});
+ const key=encodeAction(r,{type:'key',keys:['B']});assert.equal(key[12],242);assert.equal(key[15],29);assert.equal(key[9],5);
+ const disabled=encodeAction(r,{type:'disabled'});assert.equal(disabled[6],0);assert.equal(disabled[9],244);
+});

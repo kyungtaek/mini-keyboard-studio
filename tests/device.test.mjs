@@ -18,7 +18,7 @@ test('apply saves complete backup before writes, verifies all records, and does 
  const hid=new FakeHID(),d=new MiniKeyboard(hid);await d.initialize();const p=createProfile();p.layers[1].actions[4]={type:'key',keys:['F13']};
  let saved;const result=await d.apply(p,{persistBackup:async b=>{assert.equal(hid.writes.filter(x=>x[0]===253).length,0);saved=b;}});
  assert.equal(result.changed,1);assert.equal(hid.layers[1][4][9],104);assert.equal(saved.layers.flat().length,75);
- assert.equal(hid.writes.filter(x=>x[0]===253&&x[1]!==254).length,1);
+ assert.equal(hid.writes.filter(x=>x[0]===253&&x[1]!==254).length,2);
  assert.equal(hid.writes.some(x=>x[0]===252),false);
 });
 test('backup persistence failure prevents writes',async()=>{
@@ -58,4 +58,19 @@ test('new family devices use their own layout and USB identifiers for backup/app
  await d.apply(p,{persistBackup:async b=>{backup=b;}});assert.equal(backup.vid,0x1189);assert.equal(backup.pid,0x8842);assert.equal(backup.layers[0].length,12);
  await d.restore(backup,{persistBackup:async()=>{}});assert.equal(h.layers[0][11][9],4);
  await assert.rejects(d.apply(createProfile(),{persistBackup:async()=>{}}),/모델/);
+});
+
+test('media and rollback restore timing and inactive triples on firmware that copies only active entries',async()=>{
+ const hid=new FakeHID();const originalSend=hid.sendReport.bind(hid);
+ hid.layers[0][18][6]=3;hid.layers[0][18][9]=244;hid.layers[0][18][12]=242;hid.layers[0][18][15]=29;
+ hid.layers[1][19][4]=2;hid.layers[1][19][5]=1;hid.layers[1][19][6]=2;
+ hid.sendReport=async(id,p)=>{
+  if(p[0]!==253||p[1]===254)return originalSend(id,p);
+  const r=hid.layers[p[2]-1][p[1]-1].slice();hid.writes.push([...p]);
+  r[4]=p[3];if(r[4]===1)r[5]=p[4];r[6]=p[5];r.set(p.slice(6,6+r[6]*3),7);hid.layers[p[2]-1][p[1]-1]=r;
+ };
+ const d=new MiniKeyboard(hid);await d.initialize();const before=await d.readAll();
+ const p=createProfile();p.layers[0].actions[18]={type:'media',key:'VOLUME_UP'};p.layers[1].actions[19]={type:'key',keys:['B']};
+ await d.apply(p,{persistBackup:async()=>{}});assert.equal(hid.layers[0][18][15],29);
+ await d.restore(before,{persistBackup:async()=>{}});assert.deepEqual((await d.readAll()).layers,before.layers);
 });

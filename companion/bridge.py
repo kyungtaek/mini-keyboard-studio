@@ -250,7 +250,12 @@ class Bridge:
             raise ValueError('device identity changed before key rollback')
         for layer, records in enumerate(parsed, 1):
             for record in records:
-                self._wire(padded(253, *record[2:51]), 0)
+                # Prime inactive triples and timing before the final type/count.
+                stage = record.copy()
+                stage[4], stage[6] = 1, 14
+                self._wire(padded(253, *stage[2:51]), 0)
+                if record[4] != 1 or record[6] != 14:
+                    self._wire(padded(253, *record[2:51]), 0)
             for command in ((170, 170), (253, 254, 255), (170, 170)):
                 self._wire(padded(*command), 0)
             if self.delay:

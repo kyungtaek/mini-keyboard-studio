@@ -298,6 +298,29 @@ class CompanionTests(unittest.TestCase):
         self.assertFalse(self.command('status')['leaseActive'])
         self.assertEqual(self.command('abort', lease='owner'), result)
 
+    def test_abort_primes_timing_and_inactive_entries_for_media_baseline(self):
+        self.open()
+        self.hid.keys[1][19][4:7] = [2, 1, 2]
+        original = json.loads(json.dumps(self.hid.keys))
+        write = self.hid.write
+        def firmware(report):
+            if report[1] != 253 or report[2:4] == [254, 255]:
+                return write(report)
+            old = self.hid.keys[report[3] - 1][report[2] - 1][:]
+            result = write(report)
+            record = self.hid.keys[report[3] - 1][report[2] - 1]
+            if record[4] != 1:
+                record[5] = old[5]
+            end = 7 + record[6] * 3
+            record[end:51] = old[end:51]
+            return result
+        self.hid.write = firmware
+        self.command('begin', lease='owner')
+        self.command('exchange', reportId=3, data=packet(253, 20, 2, 1, 0, 1, 0, 0, 5), lease='owner')
+        self.assertEqual(self.hid.keys[1][19][5], 0)
+        self.assertTrue(self.command('abort', lease='owner')['keyRestored'])
+        self.assertEqual(self.hid.keys, original)
+
     def test_failed_key_rollback_keeps_lease_and_backup_for_retry(self):
         self.open()
         self.command('begin', lease='owner')

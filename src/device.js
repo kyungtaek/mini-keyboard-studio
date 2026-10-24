@@ -74,12 +74,22 @@ export class MiniKeyboard{
  }
  get backupInfo(){return {vid:this.hidDevice.vendorId,pid:this.hidDevice.productId,modelId:this.modelId};}
  async readAll(){return this.exclusive(async()=>createBackup(await this.capture(),this.identity,this.backupInfo));}
- async writeRecord(r){await this.send([3,253,...r.slice(2,51)]);}
+ async writeRecord(r){
+  // FD firmware writes only active entries; media also retains the keyboard timing
+  // field. Prime all 14 triples and the timing byte before installing the final type.
+  const stage=r.slice();stage[4]=1;stage[6]=14;
+  await this.send([3,253,...stage.slice(2,51)]);
+  if(r[4]!==1||r[6]!==14)await this.send([3,253,...r.slice(2,51)]);
+ }
  async commit(){for(const p of [[3,170,170],[3,253,254,255],[3,170,170]])await this.send(p);await wait(120);}
  async verifyLayer(layer,expected){
   const actual=await this.readLayer(layer);
   const failed=actual.flatMap((r,i)=>same(r,expected[i])?[]:[i+1]);
-  if(failed.length)throw Error(`레이어 ${layer}의 저장 확인 실패 (동작 ${failed.join(', ')})`);
+  if(failed.length){
+   const error=Error(`레이어 ${layer}의 저장 확인 실패 (동작 ${failed.join(', ')})`);
+   error.diagnostic={layer,actions:failed,offsets:actual.flatMap((r,i)=>failed.includes(i+1)?[{action:i+1,bytes:Array.from({length:49},(_,j)=>j+2).filter(offset=>r[offset]!==expected[i][offset])}]:[])};
+   throw error;
+  }
  }
  async transaction(before,after,{persistBackup,onProgress=()=>{}}){
   if(typeof persistBackup!=='function')throw Error('원본 백업 저장 경로가 필요합니다.');
@@ -97,7 +107,7 @@ export class MiniKeyboard{
    }
    return {changed:total,backup};
   }catch(error){
-   const failures=[];notify('적용에 실패해 원본 설정을 복원합니다.');
+   const failures=[];try{globalThis.miniKeyboardDesktop?.log?.({level:'error',component:'device',message:error.message,details:error.diagnostic||{phase:'write'}})?.catch(()=>{});}catch{}notify('적용에 실패해 원본 설정을 복원합니다.');
    for(const l of touched){
     try{for(const r of before[l])await this.writeRecord(r);await this.commit();await this.verifyLayer(l+1,before[l]);}
     catch(rollbackError){failures.push(`레이어 ${l+1}: ${rollbackError.message}`);}

@@ -28,7 +28,7 @@ export function normalizeInput(reportId,data){
 function recordCheck(r){if(!(r instanceof Uint8Array)||r.length!==64||r[0]!==3||r[1]!==250||r[2]<1||r[2]>60||r[3]<1||r[3]>3)throw Error('설정 레코드가 올바르지 않습니다.');}
 export function encodeAction(raw,action){
  recordCheck(raw);if(action.type==='preserve')return raw.slice();
- const r=raw.slice();r.fill(0,4,51);
+ const r=raw.slice();r.fill(0,4,7);
  if(action.type==='disabled'){r[4]=1;return r;}
  if(action.type==='key'||action.type==='macro'){
   const steps=action.type==='key'?[action.keys]:action.steps;const codes=[];
@@ -42,14 +42,14 @@ export function encodeAction(raw,action){
    if(!regular.length&&action.type==='macro')codes.push(0);
   }
   if(codes.length>14)throw Error('매크로는 수정 키를 포함해 14개 항목까지 가능합니다.');
-  r[4]=1;r[5]=raw[4]===1?raw[5]:0;r[6]=codes.length;codes.forEach((c,i)=>r[9+i*3]=c);return r;
+  r.fill(0,7,7+codes.length*3);r[4]=1;r[5]=raw[4]===1?raw[5]:0;r[6]=codes.length;codes.forEach((c,i)=>r[9+i*3]=c);return r;
  }
  if(action.type==='media'){
   const code=MEDIA[action.key];if(code===undefined)throw Error('지원하지 않는 미디어 키');
-  r[4]=2;r[6]=2;r[9]=code&255;r[12]=code>>8;return r;
+  r.fill(0,7,13);r[4]=2;r[6]=2;r[9]=code&255;r[12]=code>>8;return r;
  }
  if(action.type==='mouse'){
-  r[4]=3;r[5]=1;r[6]=4;
+  r.fill(0,7,22);r[4]=3;r[5]=1;r[6]=4;
   const buttons={LEFT_CLICK:1,RIGHT_CLICK:2,MIDDLE_CLICK:4};
   if(action.key in buttons)r[12]=buttons[action.key];
   else if(action.key==='SCROLL_UP')r[21]=1;
