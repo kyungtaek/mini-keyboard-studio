@@ -1,6 +1,7 @@
 import {app,BrowserWindow,Menu,Tray,nativeImage,protocol,ipcMain,dialog,shell,screen,session,clipboard,safeStorage} from 'electron';
 import {readFile,writeFile,mkdir,rename,realpath} from 'node:fs/promises';
 import path from 'node:path';
+import {createInputDebug} from './input-debug.mjs';
 import {createDiagnosticLogger,validateLogEvent} from './logging.mjs';
 import {appMenuGroups,isAppAction} from '../src/navigation.js';
 import {CatalogService} from './catalog-service.mjs';
@@ -13,7 +14,7 @@ protocol.registerSchemesAsPrivileged([{scheme:'mini-keyboard',privileges:{standa
 app.setName('Mini Keyboard Studio');
 const single=app.requestSingleInstanceLock();
 if(!single){app.quit();}else{
- let window,tray,gateway,settings={},poll,apiServer,quitting=false,allowQuit=false,pendingLink=null,lastStatus={connected:false},lastError='',lastMenuKey='',refreshStatus=async()=>{};
+ let window,tray,gateway,inputDebug,settings={},poll,apiServer,quitting=false,allowQuit=false,pendingLink=null,lastStatus={connected:false},lastError='',lastMenuKey='',refreshStatus=async()=>{};
  const root=app.getAppPath(),dataDir=app.getPath('userData'),settingsFile=path.join(dataDir,'desktop-settings.json');
  const logger=createDiagnosticLogger({directory:path.join(dataDir,'logs')});
  const log=(message,details={},level='error',component='main')=>logger.write({level,component,message,details}).catch(()=>{});
@@ -57,6 +58,7 @@ if(!single){app.quit();}else{
  app.on('activate',show);
  app.on('window-all-closed',()=>{});
  app.on('before-quit',event=>{
+  inputDebug?.pause('quit');
   if(allowQuit)return;event.preventDefault();if(quitting)return;quitting=true;clearInterval(poll);
   (async()=>{
    if(apiServer){apiServer.close();apiServer=null;}
@@ -88,7 +90,17 @@ if(!single){app.quit();}else{
   session.defaultSession.setPermissionCheckHandler(()=>false);
   const area=screen.getPrimaryDisplay().workAreaSize;
   window=new BrowserWindow({width:Math.min(1440,area.width),height:Math.min(860,area.height-20),minWidth:850,minHeight:620,show:false,title:'Mini Keyboard Studio',backgroundColor:'#121212',webPreferences:{preload:path.join(root,'desktop/preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,webviewTag:false}});
+  inputDebug=createInputDebug({
+   isFocused:()=>!quitting&&!window.isDestroyed()&&window.isVisible()&&window.isFocused(),
+   send:(channel,value)=>{try{if(!window.webContents.isDestroyed())window.webContents.send(channel,value);}catch{/* A renderer being torn down cannot receive its pause notice. */}}
+  });
+  window.webContents.on('before-input-event',(event,input)=>inputDebug.handle(event,input));
+  window.on('blur',()=>inputDebug.pause('blur'));
+  window.on('hide',()=>inputDebug.pause('hide'));
+  window.webContents.on('did-start-navigation',()=>inputDebug.pause('navigation'));
+  window.webContents.on('render-process-gone',()=>inputDebug.pause('render-process-gone'));
   const validateSender=event=>validateInvocation({url:event.senderFrame?.url,mainFrame:event.senderFrame===window.webContents.mainFrame,senderId:event.sender.id},window.webContents.id,'status',{});
+  ipcMain.handle('mini:input-debug',(event,value)=>{validateSender(event);return inputDebug.set(value);});
   ipcMain.handle('mini:log',async(event,value)=>{validateSender(event);const safe=validateLogEvent(value);await logger.write(safe);return true;});
   ipcMain.handle('mini:open-logs',async event=>{validateSender(event);return openLogs();});
   ipcMain.handle('mini:companion',async(event,command,args)=>{

@@ -147,8 +147,18 @@ HID traffic. There are no timers, animations, or app-driven keymap rewrites.
 
 | Command | Result |
 | --- | --- |
+| `setLighting` with `layer:0..2`, `mode:0..5`, `color` or `colors` | `{desired:{layer,mode,colors},changed,verified:true}` |
 | `readLighting` | `{layers:[{mode,colors:[16 hex colors]} x3],raw:[3 native-report hex strings]}` |
 | `restoreLighting` | `{restored:true,verified:true,rulesEnabled:false}` after all layers verify |
+
+`setLighting` directly applies one selected layer without changing configured
+state rules, their enabled flag, or the last source event. It uses the same
+original baseline, recovery journal, identity/serial guard, and strict readback
+as state-driven changes. Key leases reject direct settings rather than queueing
+them. A failed direct write uses the existing restoration path and disables
+state automation. These settings last for this companion session: graceful app
+exit restores the original LED baseline. They are not advertised as permanent
+keyboard configuration or verified persistence across power cycles.
 
 Before the first LED write, the daemon reads all three LED layers and durably
 saves `companion/backups/lighting-*.json`, containing raw responses and interpreted
@@ -202,3 +212,11 @@ LED verification and restoration, expired orphan recovery, owner protection, dur
 key rollback, lost-acknowledgement retries, device-bound LED restart recovery,
 and JSON-lines response behavior. These tests
 never issue hardware commands and are not a physical E2E claim.
+
+### App-window input diagnostics
+
+The Device → 키 입력 진단 tool reads all three key-action layers without writing the device. Explicitly start measurement, choose the expected on-screen position, then press the physical key. KeyboardEvent physical codes and modifier flags are compared against single-key actions in the snapshot. Blue positions are matching configuration candidates across all layers; duplicates are reported together. They do not prove a physical scan-code identity or the active hardware layer. Macros, media events, OS remapping, and OS-reserved shortcuts may not match. Events cannot distinguish the mini keyboard from another keyboard.
+
+In Electron, armed `before-input-event` handling suppresses page input and native app menu accelerators while the app window has focus. Blur, hide, navigation, renderer loss, and quit disarm measurement. This is not a global keyboard hook and does not suppress input delivered to other apps or OS-reserved commands. Raw events remain in a bounded 200-event in-memory session and are never sent to persistent diagnostic logs; the user may explicitly save a JSON measurement file containing the session settings and observed events.
+
+The direct LED editor holds the same app device-work lock as key writes and LED restoration. Opening it only reads status/LED records; it does not replace or disable state rules. Numeric modes 0–5 are exposed without unverified effect names. Direct LED changes retain the existing session restoration behavior: quitting the app restores the original LED baseline.

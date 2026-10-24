@@ -126,6 +126,11 @@ class Bridge:
             return self.configure(request)
         if command == 'state':
             return self.state(request.get('event'))
+        if command == 'setLighting':
+            self._unleased()
+            rule = self._normalize_rule({key: request[key] for key in ('layer', 'mode', 'color', 'colors') if key in request} | {'source': 'manual', 'state': 'direct'})
+            desired = {key: rule[key] for key in ('layer', 'mode', 'colors')}
+            return {'desired': desired, **self._apply_lighting(desired)}
         if command == 'readLighting':
             self._unleased()
             return self.read_lighting()

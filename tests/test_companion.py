@@ -426,6 +426,29 @@ class CompanionTests(unittest.TestCase):
             self.command('state', event=dict(version=1, source='manual', state='working'))
         self.assertFalse(any(w[1] == 254 for w in self.hid.writes))
 
+    def test_direct_lighting_apply_preserves_rules_and_enabled_setting(self):
+        self.open()
+        self.command('configure', rules=[self.rule()], enabled=True)
+        rules = self.bridge.rules[:]
+        result = self.command('setLighting', layer=2, mode=4, color='#123456')
+        self.assertTrue(result['verified'])
+        self.assertEqual(self.hid.lighting[2][2:6], [4, 18, 52, 86])
+        self.assertEqual(self.bridge.rules, rules)
+        self.assertTrue(self.command('status')['rulesEnabled'])
+        self.assertIsNone(self.command('status')['lastEvent'])
+        self.assertTrue(Path(self.command('status')['baselinePath']).exists())
+
+    def test_direct_lighting_is_lease_guarded_and_validates_before_hid(self):
+        self.open()
+        before = len(self.hid.writes)
+        for values in [dict(layer=3, mode=1, color='#123456'), dict(layer=0, mode=6, color='#123456'), dict(layer=0, mode=1, colors=['#123456'])]:
+            with self.assertRaises(ValueError):
+                self.command('setLighting', **values)
+        self.command('begin', lease='owner')
+        with self.assertRaises(ValueError):
+            self.command('setLighting', layer=0, mode=1, color='#123456')
+        self.assertEqual(len(self.hid.writes), before)
+
     def test_daemon_output_one_response_per_input_without_logs(self):
         source = io.StringIO('{"id":1,"command":"status"}\n{"id":2,"command":"invalid"}\nnot json\n')
         output = io.StringIO()
