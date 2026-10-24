@@ -1,6 +1,7 @@
 import {app,BrowserWindow,Menu,Tray,nativeImage,protocol,ipcMain,dialog,shell,screen,session,clipboard,safeStorage} from 'electron';
 import {readFile,writeFile,mkdir,rename,appendFile,realpath} from 'node:fs/promises';
 import path from 'node:path';
+import {appMenuGroups,isAppAction} from '../src/navigation.js';
 import {CatalogService} from './catalog-service.mjs';
 import {CatalogAuth,validateCatalogInvocation} from './catalog-auth.mjs';
 import {createCompanionApi} from './local-api.mjs';
@@ -19,6 +20,7 @@ if(!single){app.quit();}else{
  const readLogin=()=>app.getLoginItemSettings();
  async function setLogin(enabled){app.setLoginItemSettings({openAtLogin:enabled});settings.launchAtLogin=enabled;await saveSettings();await recordStatus();buildMenu();}
  async function recordStatus(){await writeFile(path.join(dataDir,'desktop-status.json'),JSON.stringify({version:app.getVersion(),packaged:app.isPackaged,executable:app.getPath('exe'),helper:gateway?.python,backupDir:gateway?.backupDir,userData:dataDir,login:readLogin(),trayCreated:Boolean(tray),windowVisible:window?.isVisible(),apiEnabled:Boolean(apiServer),apiPort:apiServer?4173:null,connected:lastStatus.connected,capabilities:lastStatus.capabilities,error:lastError,updatedAt:new Date().toISOString()},null,2),{mode:0o600});}
+ function sendAction(action){if(!isAppAction(action)||quitting)return;show();if(window&&!window.webContents.isLoading())window.webContents.send('mini:action',action);}
  function buildMenu(){if(!tray)return;const login=readLogin(),key=JSON.stringify([login.openAtLogin,login.status,lastStatus.connected,lastStatus.lightingRecoveryRequired,Boolean(apiServer)]);if(key===lastMenuKey)return;lastMenuKey=key;tray.setToolTip(`Mini Keyboard Studio · ${lastStatus.connected?'키보드 연결됨':'키보드 연결 전'}`);const items=[
   {label:'Mini Keyboard Studio',enabled:false},
   {label:lastStatus.connected?'● 키보드 연결됨':'○ 키보드 연결 전',enabled:false},
@@ -30,7 +32,9 @@ if(!single){app.quit();}else{
   {type:'separator'},{label:'종료',accelerator:'Command+Q',click:()=>app.quit()}
  ];tray.setContextMenu(Menu.buildFromTemplate(items));Menu.setApplicationMenu(Menu.buildFromTemplate([
   {label:app.name,submenu:[{role:'about'},{type:'separator'},...items.slice(2,-2),{type:'separator'},{role:'hide'},{role:'hideOthers'},{role:'unhide'},{type:'separator'},items.at(-1)]},
+  ...appMenuGroups.slice(0,1).map(group=>({label:group.label,submenu:group.items.map(item=>({label:item.label,...(item.accelerator?{accelerator:item.accelerator}:{}),click:()=>sendAction(item.action)}))})),
   {label:'편집',submenu:[{role:'undo'},{role:'redo'},{type:'separator'},{role:'cut'},{role:'copy'},{role:'paste'},{role:'selectAll'}]},
+  ...appMenuGroups.slice(1).map(group=>({label:group.label,submenu:group.items.map(item=>({label:item.label,...(item.accelerator?{accelerator:item.accelerator}:{}),click:()=>sendAction(item.action)}))})),
   {label:'보기',submenu:[{role:'resetZoom'},{role:'zoomIn'},{role:'zoomOut'},{role:'togglefullscreen'}]}
  ]));}
  async function reportError(error){lastError=error.message;await log(error.stack||error.message);await recordStatus();dialog.showErrorBox('Mini Keyboard Studio',error.message);}

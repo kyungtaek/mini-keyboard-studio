@@ -4,6 +4,7 @@ import { companionCall } from './companion.js';
 import { validateBackup, decodeAction, fromHex } from './protocol.js';
 import { MODELS, getModel, gridActionIds, actionCount } from './models.js';
 import { seedDesktopLibrary } from './desktop.js';
+import { isAppAction } from './navigation.js';
 
 const DRAFT_KEY = 'mini-keyboard-studio:draft:v1';
 const BACKUP_KEY = 'mini-keyboard-studio:backups:v1';
@@ -51,14 +52,13 @@ if (location.hash.startsWith('#keymap=')) {
 $('#app').innerHTML = `
   <header class="app-header">
     <div class="brand"><div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div><h1>Mini Keyboard Studio</h1></div></div>
-    <div class="connection"><label class="transport-field"><span class="sr-only">연결 방식</span><select id="transport-select" aria-label="연결 방식"><option value="webhid">브라우저 USB</option><option value="companion">보조앱</option></select></label><span class="status" id="connection-status"><span class="status-dot"></span>장치 연결 전</span><button class="circle-button" id="led-open-button" data-action="lighting" disabled title="보조앱 연결에서 사용" aria-label="상태·LED">${icon('light')}</button><button data-action="connect">${icon('usb')}<span>키보드 연결</span></button></div>
+    <nav class="app-tools" aria-label="앱 도구"><button class="quiet" data-action="files">${icon('file')}파일</button><button class="quiet device-nav" data-action="devices"><span class="status-dot" id="header-device-dot"></span><span id="header-device-label">장치 관리</span>${icon('usb')}</button></nav>
   </header>
   <div class="workspace">
     <aside class="sidebar" aria-label="키맵 보관함">
       <div class="sidebar-heading"><h2>내 키맵</h2><button class="quiet new-keymap" data-action="new" title="새 키맵" aria-label="새 키맵">${icon('plus')}</button></div>
       <div class="library-list" id="library-list"></div>
-      <section class="file-tools" aria-label="파일·공유"><h3>파일·공유</h3><button class="quiet" data-action="import">${icon('import')}가져오기</button><button class="quiet" data-action="export">${icon('export')}내보내기</button><button class="quiet" data-action="share">${icon('share')}공유 링크</button></section>
-      <div class="sidebar-backup"><button class="quiet small" data-action="presets">${icon('file')}키맵 카탈로그</button><button class="quiet small" data-action="backups">${icon('clock')}장치 백업</button></div>
+      <nav class="sidebar-tools" aria-label="키맵 도구"><button class="quiet" data-action="presets">${icon('keyboard')}키맵 카탈로그</button><button class="quiet" data-action="files">${icon('file')}파일·공유</button></nav>
 
     </aside>
     <main class="editor-main">
@@ -67,13 +67,15 @@ $('#app').innerHTML = `
       <div class="board-heading"><div class="layers" role="tablist" aria-label="편집할 레이어"></div><span class="model-note" id="model-note"></span></div>
       <div id="keyboard-layout" role="tabpanel" aria-labelledby="layer-tab-0"><div class="hardware-stage"><div class="board-shell"><div class="keyboard"><div class="hardware-face"><div class="key-grid" id="key-grid" aria-label="키패드"></div><div class="encoders" id="encoders" aria-label="다이얼 설정"></div></div><div class="keyboard-footer"><span id="board-model-label"></span><span class="keyboard-led" aria-hidden="true"></span><span id="board-layer-label">LAYER 01</span></div></div></div></div></div>
       <div class="quick-actions"><button class="quiet small" data-action="copy-layer" title="현재 레이어 복사">${icon('file')}레이어 복사</button><button class="quiet small" data-action="paste-layer" id="paste-layer" disabled>붙여넣기</button></div>
-      <section class="device-panel" aria-labelledby="device-heading"><div class="device-panel-heading"><h2 id="device-heading">${icon('usb')}<span id="device-model-name">키보드</span></h2><span class="local-badge" title="적용 전 키·다이얼 동작을 브라우저에 백업합니다. LED·펌웨어는 포함하지 않습니다.">${icon('lock')}자동 백업</span></div><p id="device-description">USB 연결 전</p><div class="device-apply"><div><button class="quiet small" data-action="read-device" id="read-device" disabled title="연결된 키보드의 동작을 새 키맵으로 읽어옵니다.">${icon('import')}설정 읽기</button><span id="apply-hint" class="sr-only">키·다이얼 동작 백업 후 적용</span></div><button class="primary" data-action="apply" id="apply-button" disabled>${icon('usb')}적용</button></div><p class="device-message" id="device-message" role="status"></p></section>
+      <footer class="apply-bar"><button class="quiet apply-device" data-action="devices">${icon('usb')}<span id="apply-device-label">장치 연결 전</span></button><div class="apply-guard" title="현재 키·다이얼 동작을 먼저 백업합니다.">${icon('lock')}자동 백업</div><span id="apply-hint" class="sr-only">키·다이얼 동작 백업 후 적용</span><button class="primary" data-action="apply" id="apply-button" disabled>${icon('usb')}장치에 적용</button></footer><p class="device-message" id="device-message" role="status"></p>
       <div class="session-notice" id="session-notice" hidden></div>
     </main>
     <aside class="action-panel" aria-labelledby="action-heading"><div class="action-panel-inner"><div class="action-header"><div><h2 id="action-heading">동작 편집</h2><p id="selection-caption"></p></div><span class="selection-badge" id="selection-badge"></span></div><div id="action-editor"></div><button class="quiet small help-button" title="원래 동작 유지: 장치에 저장된 동작을 그대로 둡니다. 레이어 선택은 편집할 설정을 바꾸며, 실제 레이어는 키보드에서 전환합니다." aria-label="동작 편집 도움말">ⓘ</button></div></aside>
   </div>
   <input class="file-input" type="file" id="import-file" accept=".json,application/json">
   <input class="file-input" type="file" id="backup-file" accept=".json,application/json">
+  <dialog id="files-dialog" class="tool-dialog" aria-labelledby="files-title"><div class="dialog-heading"><h2 id="files-title">파일·공유</h2><button class="quiet small" data-close="files-dialog" aria-label="닫기">${icon('close')}</button></div><div class="file-context">${icon('file')}<span id="file-profile-name"></span><span class="file-format">JSON</span></div><div class="tool-actions"><button data-action="import">${icon('import')}<span><strong>키맵 파일 열기</strong><small>JSON 파일에서 가져오기</small></span><span class="tool-arrow" aria-hidden="true">↗</span></button><button data-action="export">${icon('export')}<span><strong>파일로 내보내기</strong><small>현재 키맵 저장</small></span><span class="tool-arrow" aria-hidden="true">↗</span></button><button data-action="share">${icon('share')}<span><strong>링크로 공유</strong><small>키맵이 담긴 링크 만들기</small></span><span class="tool-arrow" aria-hidden="true">↗</span></button></div></dialog>
+  <dialog id="devices-dialog" class="tool-dialog device-dialog" aria-labelledby="devices-title"><div class="dialog-heading"><h2 id="devices-title">장치 관리</h2><button class="quiet small" data-close="devices-dialog" aria-label="닫기">${icon('close')}</button></div><div class="device-portrait"><div class="mini-device" aria-hidden="true">${Array.from({length:16},()=>'<i></i>').join('')}<span>◉ ◉ ◉</span></div><div><h3 id="device-model-name">키보드</h3><span class="status" id="connection-status"><span class="status-dot"></span>장치 연결 전</span></div></div><div class="device-connection-row"><label class="transport-field"><span class="sr-only">연결 방식</span><select id="transport-select" aria-label="연결 방식"><option value="webhid">브라우저 USB</option><option value="companion">보조앱</option></select></label><button data-action="connect">${icon('usb')}<span>키보드 연결</span></button></div><p id="device-description" class="device-detail" role="status"></p><div class="device-utilities"><button class="quiet" data-action="read-device" id="read-device" disabled>${icon('import')}설정 읽기</button><button class="quiet" data-action="backups">${icon('clock')}장치 백업</button><button class="quiet" id="led-open-button" data-action="lighting" disabled title="보조앱 연결에서 사용" aria-label="상태·LED">${icon('light')}상태·LED</button></div></dialog>
   <dialog id="share-dialog" aria-labelledby="share-title"><div class="dialog-heading"><h2 id="share-title">키맵 링크 공유</h2><button class="quiet small" data-close="share-dialog" aria-label="닫기">${icon('close')}</button></div><p>키맵을 링크에 담았습니다. 링크를 받은 사람은 자신의 작업으로 열어 수정할 수 있습니다. 장치 백업은 포함하지 않습니다.</p><label class="sr-only" for="share-url">공유 링크</label><input class="share-input" id="share-url" readonly><p class="share-privacy">링크에는 키 입력과 매크로가 그대로 들어갑니다. 비밀번호 등 민감한 내용을 넣지 마세요.</p><div class="dialog-actions"><button data-action="copy-share" class="primary">링크 복사</button></div></dialog>
   <dialog id="presets-dialog" class="catalog-dialog" aria-labelledby="presets-title"><div class="dialog-heading"><div><h2 id="presets-title">키맵 카탈로그</h2><p class="catalog-subtitle">마음에 드는 키맵을 골라 내 키보드에 맞춰 보세요.</p></div><button class="quiet small" data-close="presets-dialog" aria-label="닫기">${icon('close')}</button></div>
     <div class="catalog-topline"><div class="catalog-tabs" role="tablist" aria-label="키맵 출처"><button role="tab" id="catalog-github-tab" aria-selected="true" aria-controls="catalog-remote" data-catalog-tab="github">GitHub 카탈로그</button><button role="tab" id="catalog-bundled-tab" aria-selected="false" aria-controls="catalog-bundled" data-catalog-tab="bundled">기본 샘플</button></div><button class="quiet small" data-action="catalog-settings" id="catalog-settings">연결 설정</button></div>
@@ -283,8 +285,17 @@ function renderBackups() {
   } catch (error) { $('#backup-list').textContent = `백업을 읽지 못했습니다: ${explain(error)}`; }
 }
 function progress(message) { $('#device-message').textContent = typeof message === 'string' ? message : message?.message || JSON.stringify(message); }
+function openTool(id) {
+  for(const name of ['files-dialog','devices-dialog']) if(name!==id && $(`#${name}`).open) $(`#${name}`).close();
+  if(!$(`#${id}`).open)$(`#${id}`).showModal();
+}
 function updateDeviceUI() {
   const connected = Boolean(device);
+  $('#header-device-dot').classList.toggle('connected',connected);
+  $('#header-device-label').textContent = connected ? '키보드 연결됨' : '장치 연결';
+  $('#apply-device-label').textContent = connected ? (device.modelId ? getModel(device.modelId).name : device.name) : '장치 연결 전';
+  $('#devices-dialog').classList.toggle('has-device',connected);
+  $('#file-profile-name').textContent = profile.name;
   $('#connection-status').innerHTML = `<span class="status-dot ${connected ? 'connected' : ''}"></span>${escapeHTML(connected ? device.name || '키보드 연결됨' : '장치 연결 전')}`;
   $('[data-action="connect"]').innerHTML = `${icon('usb')}<span>${busy ? '처리 중…' : connected ? '연결 해제' : '키보드 연결'}</span>`;
   $('[data-action="connect"]').disabled = busy || ($('#transport-select').value === 'webhid' && !('hid' in navigator));
@@ -294,7 +305,7 @@ function updateDeviceUI() {
   const modelMismatch = device && device.modelId !== profile.modelId;
   $('#apply-button').disabled = busy || !device?.compatible || modelMismatch;
   $('#read-device').disabled = busy || !device?.compatible;
-  $('#apply-button').innerHTML = `${icon('usb')}${busy ? '처리 중…' : '적용'}`;
+  $('#apply-button').innerHTML = `${icon('usb')}${busy ? '처리 중…' : '장치에 적용'}`;
   $('#device-model-name').textContent = connected ? (device.modelId ? getModel(device.modelId).name : device.name || 'Mini Keyboard') : '키보드';
   if ($('#transport-select').value === 'webhid' && !('hid' in navigator)) $('#device-description').textContent = '장치 연결: 데스크톱 Chrome / Edge 필요';
   else if (connected && !device.compatible) $('#device-description').textContent = device.compatibilityReason || `연결한 장치의 기록 방식을 확인하지 못했습니다. 식별값: ${(device.identity || []).map(value => `0x${value.toString(16).padStart(2,'0')}`).join(' ')}. 키맵은 계속 편집할 수 있습니다.`;
@@ -345,7 +356,11 @@ document.addEventListener('click', async event => {
     if (target.dataset.exportBackup) { const entry = backups().find(item => item.id === target.dataset.exportBackup); if (entry) download(entry.backup,`mini-keyboard-backup-${entry.savedAt.slice(0,10)}.json`); return; }
     if (target.dataset.deleteBackup) { const next = backups().filter(item => item.id !== target.dataset.deleteBackup); localStorage.setItem(BACKUP_KEY,JSON.stringify(next)); renderBackups(); toast('백업을 삭제했습니다.'); return; }
     if (target.dataset.restoreBackup) { const entry = backups().find(item => item.id === target.dataset.restoreBackup); if (entry) { $('#backups-dialog').close(); await withDeviceWork(async () => { const result = await device.restore(entry.backup,{persistBackup,onProgress:progress}); await refreshSnapshot(); progress(`${result.changed}개 동작 복원 · 재읽기 확인`); toast('백업을 복원하고 확인했습니다.'); }); } return; }
+    if (['import','export','share'].includes(target.dataset.action)) $('#files-dialog').close();
+    if (['lighting','backups','read-device'].includes(target.dataset.action)) $('#devices-dialog').close();
     switch (target.dataset.action) {
+      case 'files': $('#file-profile-name').textContent=profile.name; openTool('files-dialog'); break;
+      case 'devices': updateDeviceUI(); openTool('devices-dialog'); break;
       case 'connect': await connect(); break;
       case 'lighting': await openLighting(); break;
       case 'read-lighting': await lightingWork(async()=>renderLightingReadings(await companionCall('readLighting'))); break;
@@ -412,11 +427,10 @@ $('#import-file').addEventListener('change', async event => {
   const file = event.target.files[0]; if (!file) return;
   try {
     if (file.size > MAX_FILE) throw new Error('128KB 이하의 키맵 JSON 파일을 선택하세요.');
+    if (busy || catalogDownloading) throw new Error('장치 작업이 끝난 뒤 파일을 다시 열어 주세요.');
     const imported = validateProfile(JSON.parse(await file.text()));
-    imported.id = createProfile().id;
-    profile = imported; layer = 0; selected = 1;
-    notice = '';
-    fullRender(); persistDraft(); toast('키맵을 가져왔습니다.');
+    if (busy || catalogDownloading) throw new Error('장치 작업이 끝난 뒤 파일을 다시 열어 주세요.');
+    preserveAndOpen(imported); toast('키맵을 가져왔습니다.');
   } catch (error) { toast(`파일을 가져오지 못했습니다: ${explain(error)}`,true); }
 });
 $('#backup-file').addEventListener('change', async event => {
@@ -734,6 +748,14 @@ new ResizeObserver(()=>layoutBoard()).observe($('.hardware-stage'));
 if (!isSecureContext) { notice = '장치 연결에는 HTTPS 또는 localhost가 필요합니다. 로컬 서버에서 이 페이지를 열어 주세요.'; $('#session-notice').textContent = notice; $('#session-notice').hidden = false; }
 if(globalThis.miniKeyboardDesktop?.version===1){
   $('#transport-select').value='companion';$('.transport-field').hidden=true;updateDeviceUI();
+  miniKeyboardDesktop.onAction?.(action=>{
+    if(!isAppAction(action))return;
+    if(busy || catalogDownloading){toast('진행 중인 작업이 끝난 뒤 다시 선택하세요.',true);return;}
+    const button=$(`[data-action="${action}"]`);
+    if(!button || button.disabled)return;
+    document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());
+    button.click();
+  });
   miniKeyboardDesktop.onKeymap(url=>{
     if(busy){toast('장치 작업이 끝난 뒤 공유 링크를 다시 열어 주세요.',true);return;}
     try{const target=new URL(url);if(target.protocol==='mini-keyboard:'&&target.hostname==='studio'&&target.hash.startsWith('#keymap='))location.hash=target.hash;}catch(error){toast(explain(error),true);}

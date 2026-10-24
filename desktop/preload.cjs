@@ -1,6 +1,7 @@
 const {contextBridge,ipcRenderer}=require('electron');
 contextBridge.exposeInMainWorld('miniKeyboardDesktop',{
  version:1,
+ onAction:callback=>{const listener=(_event,action)=>callback(action);ipcRenderer.on('mini:action',listener);return ()=>ipcRenderer.removeListener('mini:action',listener);},
  catalog:(command,args={})=>ipcRenderer.invoke('mini:catalog',command,args),
  call:(command,args={})=>ipcRenderer.invoke('mini:companion',command,args),
  copyKeymap:url=>ipcRenderer.invoke('mini:copy-keymap',url),

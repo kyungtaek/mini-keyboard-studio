@@ -4,7 +4,7 @@ Mini Keyboard 앱 없이 키·다이얼 설정을 만들고 USB 키보드에 적
 
 ## macOS 앱
 
-Apple Silicon용 **Mini Keyboard Studio 0.3.0**을 `/Users/kent/Applications/Mini Keyboard Studio.app`에 설치했습니다. 웹 편집기·HID 실행 파일·샘플 6종을 한 앱에 포함합니다. 별도 Node/Python 설치나 서버 실행 없이 앱을 엽니다. 배포 파일은 `dist/Mini Keyboard Studio-0.3.0-arm64-mac.zip`입니다.
+Apple Silicon용 **Mini Keyboard Studio 0.3.1**을 `/Users/kent/Applications/Mini Keyboard Studio.app`에 설치했습니다. 웹 편집기·HID 실행 파일·샘플 6종을 한 앱에 포함합니다. 별도 Node/Python 설치나 서버 실행 없이 앱을 엽니다. 배포 파일은 `dist/Mini Keyboard Studio-0.3.1-arm64-mac.zip`입니다.
 
 - 창을 닫으면 메뉴 막대에서 계속 실행됩니다. **종료** 또는 Cmd+Q는 HID 복구와 실행 파일 종료를 기다립니다.
 - 메뉴 막대 아이콘 또는 앱 메뉴에서 **설정 열기**, **로그인 시 자동 실행**, **데이터 폴더 열기**, **Codex 연동용 로컬 API**를 사용할 수 있습니다.
@@ -32,7 +32,9 @@ Apple Silicon용 **Mini Keyboard Studio 0.3.0**을 `/Users/kent/Applications/Min
 
 0·90·180·270도 회전은 키·다이얼 전체의 화면 배치와 JSON에 저장되며 실제 동작 ID를 바꾸지 않습니다. 키맵과 장치 모델이 다르면 적용을 막습니다. 기존 v1 키맵은 v2로 변환해 읽습니다.
 
-데스크톱 작업 화면은 창 높이에 맞춰 키보드를 조절합니다. 파일 가져오기·내보내기·공유는 왼쪽 **파일·공유**, 새 키맵은 **내 키맵**의 + 버튼에 있습니다. 작은 창과 모바일은 세로로 이어서 표시합니다.
+데스크톱 작업 화면은 창 높이에 맞춰 키보드를 조절합니다. 상단 **파일**(⌘O)에서 JSON 열기·내보내기·공유를, **장치 관리**(⌘⇧D)에서 연결·해제·설정 읽기·백업·상태·LED를 엽니다. 왼쪽은 내 키맵과 카탈로그, 하단은 **장치에 적용**입니다. 새 키맵은 **내 키맵**의 + 또는 ⌘N, 저장은 ⌘S, 카탈로그는 ⌘⇧K입니다. macOS 메뉴 막대도 **파일 / 편집 / 키맵 / 장치 / 보기**로 구분합니다. 작은 창과 모바일은 세로로 이어서 표시합니다.
+
+파일 가져오기와 카탈로그 열기는 현재 편집 중인 키맵을 보관하고 새 ID로 엽니다. 키맵 JSON을 여는 동작만으로 장치에 기록하지 않습니다.
 
 ## GitHub 키맵 카탈로그
 

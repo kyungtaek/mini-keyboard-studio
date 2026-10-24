@@ -1,6 +1,6 @@
 {
   "name": "mini-keyboard-studio",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Local macro keyboard editor and HID companion",
   "author": "Mini Keyboard Studio",
   "main": "desktop/main.mjs",
