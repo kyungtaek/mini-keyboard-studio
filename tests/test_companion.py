@@ -449,6 +449,196 @@ class CompanionTests(unittest.TestCase):
             self.command('setLighting', layer=0, mode=1, color='#123456')
         self.assertEqual(len(self.hid.writes), before)
 
+    def profile_layer(self, layer=0, mode=1, color='#123456'):
+        return {'layer': layer, 'mode': mode, 'colors': [color] * 16}
+
+    def test_profile_led_batch_validates_every_entry_before_hid(self):
+        self.open()
+        before = len(self.hid.writes)
+        valid = self.profile_layer()
+        for layers in [[], [valid, self.profile_layer(3)], [valid, valid], [dict(valid, unexpected=True)], [dict(valid, colors=['#123456'])]]:
+            with self.assertRaises(ValueError):
+                self.command('saveProfileLighting', layers=layers)
+        with self.assertRaises(ValueError):
+            self.command('saveProfileLighting', layers=[valid], color='#123456')
+        self.command('begin', lease='owner')
+        with self.assertRaises(ValueError):
+            self.command('saveProfileLighting', layers=[valid])
+        self.assertEqual(len(self.hid.writes), before)
+
+    def test_profile_led_save_survives_close_while_other_state_layer_restores(self):
+        self.open()
+        original = [layer[:] for layer in self.hid.lighting]
+        self.command('configure', rules=[self.rule()], enabled=True)
+        self.command('state', event=dict(version=1, source='manual', state='working'))
+        rules = self.bridge.rules[:]
+        old_path = self.bridge.baseline_path
+        result = self.command('saveProfileLighting', layers=[self.profile_layer(1, 2, '#112233')])
+        self.assertTrue(result['persisted'])
+        self.assertTrue(result['verified'])
+        self.assertEqual(self.bridge.modified_layers, {0})
+        self.assertEqual(self.bridge.rules, rules)
+        self.assertTrue(self.bridge.enabled)
+        self.assertTrue(Path(old_path).exists())
+        self.assertNotEqual(old_path, self.bridge.baseline_path)
+        self.command('close')
+        self.assertEqual(self.hid.lighting[0], original[0])
+        self.assertEqual(self.hid.lighting[1][2:6], [2, 17, 34, 51])
+        self.assertEqual(self.hid.lighting[2], original[2])
+
+    def test_profile_led_promotes_already_applied_temporary_layer(self):
+        self.open()
+        self.command('setLighting', layer=0, mode=1, color='#123456')
+        self.command('saveProfileLighting', layers=[self.profile_layer()])
+        self.assertEqual(self.bridge.modified_layers, set())
+        self.command('close')
+        self.assertEqual(self.hid.lighting[0][2:6], [1, 18, 52, 86])
+
+    def test_profile_led_batch_failure_restores_immediate_before_and_rules(self):
+        self.open()
+        self.command('configure', rules=[self.rule()], enabled=True)
+        self.command('state', event=dict(version=1, source='manual', state='working'))
+        before = [layer[:] for layer in self.hid.lighting]
+        old_path = self.bridge.baseline_path
+        write = self.hid.write
+        def fail_second_layer(report):
+            if report[1:4] == [254, 176, 1] and report[5:8] == [68, 85, 102]:
+                self.hid.corrupt_after_write = True
+            return write(report)
+        self.hid.write = fail_second_layer
+        with self.assertRaisesRegex(ValueError, 'batch.*restored'):
+            self.command('saveProfileLighting', layers=[self.profile_layer(0, 2), self.profile_layer(1, 2, '#445566')])
+        self.assertEqual(self.hid.lighting, before)
+        self.assertEqual(self.bridge.baseline_path, old_path)
+        self.assertEqual(self.bridge.modified_layers, {0})
+        self.assertFalse(self.bridge.lighting_recovery_required)
+        self.assertTrue(self.bridge.enabled)
+
+    def test_profile_led_durable_promotion_failure_rolls_back_before_cleanup(self):
+        self.open()
+        self.command('setLighting', layer=2, mode=1, color='#aabbcc')
+        before = [layer[:] for layer in self.hid.lighting]
+        original_persist = self.bridge._persist
+        lighting_files = [0]
+        def fail_promotion(kind, value):
+            if kind == 'lighting':
+                lighting_files[0] += 1
+                if lighting_files[0] == 2:
+                    raise OSError('disk failure during promotion')
+            return original_persist(kind, value)
+        self.bridge._persist = fail_promotion
+        with self.assertRaisesRegex(ValueError, 'disk failure'):
+            self.command('saveProfileLighting', layers=[self.profile_layer()])
+        self.assertEqual(self.hid.lighting, before)
+        self.assertEqual(self.bridge.modified_layers, {2})
+
+    def test_profile_led_pending_journal_reopen_preserves_saved_and_restores_temporary(self):
+        self.open()
+        original = [layer[:] for layer in self.hid.lighting]
+        self.command('setLighting', layer=2, mode=1, color='#aabbcc')
+        self.command('saveProfileLighting', layers=[self.profile_layer(0, 3, '#112233')])
+        self.bridge = Bridge(transport=self.hid, backup_dir=self.temp.name, delay=0)
+        self.open()
+        self.assertTrue(self.bridge.lighting_recovery_required)
+        self.command('restoreLighting')
+        self.assertEqual(self.hid.lighting[0][2:6], [3, 17, 34, 51])
+        self.assertEqual(self.hid.lighting[2], original[2])
+
+    def test_profile_led_promotion_keeps_original_raw_tail_bytes(self):
+        self.open()
+        self.hid.lighting[0][51:] = list(range(13))
+        self.command('saveProfileLighting', layers=[self.profile_layer()])
+        raw = bytes.fromhex(self.bridge.baseline['raw'][0])
+        self.assertEqual(raw[51:], bytes(range(13)))
+
+    def test_profile_led_journal_commit_failure_never_clears_cleanup_flags(self):
+        self.open()
+        self.command('setLighting', layer=2, mode=1, color='#aabbcc')
+        before = [layer[:] for layer in self.hid.lighting]
+        original_path = self.bridge.baseline_path
+        save = self.bridge._save_lighting_journal
+        failed = [False]
+        def fail_commit(**kwargs):
+            if kwargs.get('pending_layers') == {2} and kwargs.get('baseline_path') != original_path and not failed[0]:
+                self.assertEqual(self.bridge.modified_layers, {0, 2})
+                self.assertEqual(self.bridge.batch_session_baseline[1], original_path)
+                failed[0] = True
+                raise OSError('journal promotion failed')
+            return save(**kwargs)
+        self.bridge._save_lighting_journal = fail_commit
+        with self.assertRaisesRegex(ValueError, 'journal promotion failed'):
+            self.command('saveProfileLighting', layers=[self.profile_layer()])
+        self.assertEqual(self.hid.lighting, before)
+        self.assertEqual(self.bridge.baseline_path, original_path)
+        self.assertEqual(self.bridge.modified_layers, {2})
+        self.assertFalse(self.bridge.lighting_recovery_required)
+
+    def test_profile_led_failed_rollback_reopen_retains_original_session_recovery(self):
+        self.open()
+        original = [layer[:] for layer in self.hid.lighting]
+        self.command('setLighting', layer=0, mode=1, color='#aabbcc')
+        write = self.hid.write
+        def fail_batch_and_rollback(report):
+            if report[1:4] == [254, 176, 1] and report[5:8] == [68, 85, 102]:
+                self.hid.corrupt_after_write = True
+            if report[1:4] == [254, 176, 0] and report[5:8] == [170, 187, 204]:
+                self.hid.corrupt_after_write = True
+            return write(report)
+        self.hid.write = fail_batch_and_rollback
+        with self.assertRaisesRegex(ValueError, 'recovery required'):
+            self.command('saveProfileLighting', layers=[self.profile_layer(0, 2), self.profile_layer(1, 2, '#445566')])
+        self.assertTrue(self.bridge.lighting_recovery_required)
+        self.hid.write = write
+        self.bridge = Bridge(transport=self.hid, backup_dir=self.temp.name, delay=0)
+        self.open()
+        self.assertTrue(self.bridge.lighting_recovery_required)
+        self.assertIsNotNone(self.bridge.batch_session_baseline)
+        self.command('restoreLighting')
+        self.assertEqual(self.hid.lighting, original)
+        self.assertIsNone(self.bridge.batch_session_baseline)
+
+    def test_profile_led_expected_device_rejects_mismatch_before_hid(self):
+        self.open()
+        binding = dict(vendorId=0x514c, productId=0x8850, identity=[16, 3, 11], serialNumber='FAKE-SERIAL-1')
+        before = len(self.hid.writes)
+        for expected in [None, dict(binding, serialNumber='OTHER'), dict(binding, serialNumber=''),
+                         dict(binding, identity=[16, '3', 11]), dict(binding, vendorId='20812'),
+                         dict(binding, pathHex='unexpected'), dict(binding, identity=[16, 3, True])]:
+            with self.subTest(expected=expected):
+                with self.assertRaises(ValueError):
+                    self.command('saveProfileLighting', layers=[self.profile_layer()], expectedDevice=expected)
+        self.assertEqual(len(self.hid.writes), before)
+        result = self.command('saveProfileLighting', layers=[self.profile_layer()], expectedDevice=binding)
+        self.assertTrue(result['persisted'])
+        self.assertTrue(result['verified'])
+
+    def test_begin_expected_device_validates_atomically_before_lease(self):
+        self.open()
+        binding = dict(vendorId=0x514c, productId=0x8850, identity=[16, 3, 11], serialNumber='FAKE-SERIAL-1')
+        before = len(self.hid.writes)
+        for expected in [None, dict(binding, serialNumber='OTHER'), dict(binding, identity=[16, 3, True]), dict(binding, extra=True)]:
+            with self.subTest(expected=expected):
+                with self.assertRaises(ValueError):
+                    self.command('begin', lease='owner', expectedDevice=expected)
+                self.assertFalse(self.bridge.status()['leaseActive'])
+        self.assertEqual(len(self.hid.writes), before)
+        result = self.command('begin', lease='owner', expectedDevice=binding)
+        self.assertTrue(result['leaseActive'])
+        self.assertEqual(len(self.hid.writes), before)
+        self.command('end', lease='owner')
+
+    def test_begin_expected_device_supports_empty_serial_for_generic_key_devices(self):
+        self.hid.serial = ''
+        self.open()
+        binding = dict(vendorId=0x514c, productId=0x8850, identity=[16, 3, 11], serialNumber='')
+        before = len(self.hid.writes)
+        self.assertTrue(self.command('begin', lease='owner', expectedDevice=binding)['leaseActive'])
+        self.assertEqual(len(self.hid.writes), before)
+        self.command('end', lease='owner')
+        with self.assertRaises(ValueError):
+            self.command('begin', lease='other', expectedDevice=dict(binding, serialNumber=None))
+        self.assertFalse(self.bridge.status()['leaseActive'])
+
     def test_daemon_output_one_response_per_input_without_logs(self):
         source = io.StringIO('{"id":1,"command":"status"}\n{"id":2,"command":"invalid"}\nnot json\n')
         output = io.StringIO()

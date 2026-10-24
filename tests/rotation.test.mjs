@@ -15,3 +15,10 @@ test('four right turns restore original key order; preserve slots require known 
  assert.throws(()=>rotateProfileKeys(fixture(),45),/회전/);
  const rectangular=createProfile('Rect','mini-6x1');assert.throws(()=>rotateProfileKeys(rectangular,90),/배치/);
 });
+
+test('explicit key LED colors follow visible key rotation while layer mode stays common',()=>{
+ const p=fixture();p.layers[0].lighting={mode:2,colors:Array(16).fill(null)};p.layers[0].lighting.colors[0]='#ff0000';
+ const next=rotateProfileKeys(p,270);const index=gridActionIds(p.modelId,0).flat().indexOf(1),destination=gridActionIds(p.modelId,270).flat()[index];
+ assert.equal(next.layers[0].lighting.colors[destination-1],'#ff0000');assert.equal(next.layers[0].lighting.mode,2);
+ assert.deepEqual(rotateProfileKeys(next,0).layers,p.layers);
+});

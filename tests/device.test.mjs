@@ -95,3 +95,11 @@ test('top-knob placement keeps raw IDs and matches independently measured rotate
  await d.restore(original,{persistBackup:async()=>{}});
  assert.deepEqual((await d.readAll()).layers,original.layers);
 });
+
+test('disabled key writes a zero-length keyboard action and leaves other records intact',async()=>{
+ const hid=new FakeHID(),device=new MiniKeyboard(hid);await device.initialize();
+ const before=await device.readAll(),profile=createProfile();profile.layers[0].actions[0]={type:'disabled'};
+ const result=await device.apply(profile,{persistBackup:async()=>{}});
+ assert.equal(result.changed,1);assert.equal(hid.layers[0][0][4],1);assert.equal(hid.layers[0][0][6],0);
+ assert.deepEqual((await device.readAll()).layers[0].slice(1),before.layers[0].slice(1));
+});

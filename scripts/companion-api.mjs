@@ -14,7 +14,7 @@ export function authorizeApi(req,port,token){
   if(actual.length!==expected.length||!timingSafeEqual(actual,expected))throw Error('보조 앱 세션 토큰이 일치하지 않습니다.');
  }
 }
-export const commands=new Set(['list','open','close','exchange','begin','end','abort','recover','configure','state','readLighting','setLighting','restoreLighting','status']);
+export const commands=new Set(['list','open','close','exchange','begin','end','abort','recover','configure','state','readLighting','setLighting','saveProfileLighting','restoreLighting','status']);
 export class CompanionGateway{
  constructor(root,options={}){this.root=root;this.cwd=options.cwd||root;this.token=randomUUID();this.child=null;this.closing=false;this.shutdownTimeoutMs=options.shutdownTimeoutMs??35000;this.pending=new Map();this.python=options.executable||path.join(root,'.venv','bin','python');this.args=options.args||[path.join(root,'companion','bridge.py')];this.backupDir=options.backupDir;this.stderr='';}
  get available(){return existsSync(this.python)&&(!this.args.length||existsSync(this.args[0]));}

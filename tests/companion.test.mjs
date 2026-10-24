@@ -11,6 +11,24 @@ test('desktop calls its isolated preload bridge without an HTTP server',async()=
  finally{globalThis.fetch=oldFetch;if(oldBridge===undefined)delete globalThis.miniKeyboardDesktop;else globalThis.miniKeyboardDesktop=oldBridge;}
 });
 
+test('transaction acquisition binds key apply and restore to the opened device',async()=>{
+ const oldBridge=globalThis.miniKeyboardDesktop,requests=[];
+ const binding={vendorId:0x514c,productId:0x8850,identity:[16,3,11],serialNumber:'board-A'};
+ globalThis.miniKeyboardDesktop={version:1,call:async(command,args)=>{
+  requests.push({command,...args});
+  if(command==='open')return {...binding,pathHex:'aabb'};
+  if(command==='exchange')return {reports:[{reportId:3,data:[251,16,3,11,...Array(59).fill(0)]}]};
+  return {};
+ }};
+ try{
+  const controller=await connectCompanionDevice();
+  await controller.hidDevice.beginTransaction();
+  assert.deepEqual(requests.find(r=>r.command==='begin').expectedDevice,binding);
+  await controller.hidDevice.endTransaction();
+  await controller.disconnect();
+ }finally{if(oldBridge===undefined)delete globalThis.miniKeyboardDesktop;else globalThis.miniKeyboardDesktop=oldBridge;}
+});
+
 test('failed transaction end retains its lease for retry and blocks replacing it',async()=>{
  const originalFetch=globalThis.fetch,requests=[];
  let failedEnd=false;

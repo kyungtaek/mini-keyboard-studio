@@ -66,6 +66,7 @@ class Bridge:
         self.queued_event = None
         self.baseline = None
         self.baseline_path = None
+        self.batch_session_baseline = None
         self.modified_layers = set()
         self.applied = {}
 
@@ -85,6 +86,7 @@ class Bridge:
             return self.exchange(request)
         if command == 'begin':
             self._connected()
+            self._check_expected_device(request, allow_empty_serial=True)
             lease = text_field(request.get('lease'), 'lease')
             if self.lease is not None:
                 raise ValueError('a transaction lease is already active')
@@ -131,6 +133,8 @@ class Bridge:
             rule = self._normalize_rule({key: request[key] for key in ('layer', 'mode', 'color', 'colors') if key in request} | {'source': 'manual', 'state': 'direct'})
             desired = {key: rule[key] for key in ('layer', 'mode', 'colors')}
             return {'desired': desired, **self._apply_lighting(desired)}
+        if command == 'saveProfileLighting':
+            return self.save_profile_lighting(request)
         if command == 'readLighting':
             self._unleased()
             return self.read_lighting()
@@ -460,6 +464,24 @@ class Bridge:
             return None
         return {key: self.device[key] for key in ('vendorId', 'productId', 'identity', 'serialNumber')}
 
+    def _check_expected_device(self, request, allow_empty_serial=False):
+        if 'expectedDevice' in request:
+            expected = request['expectedDevice']
+            fields = {'vendorId', 'productId', 'identity', 'serialNumber'}
+            if not isinstance(expected, dict) or set(expected) != fields:
+                raise ValueError('expectedDevice requires only vendorId, productId, identity, and serialNumber')
+            identity = expected['identity']
+            if not integer(expected['vendorId'], 0, 65535) or not integer(expected['productId'], 0, 65535) or not isinstance(identity, list) or len(identity) != 3 or not all(integer(value, 0, 255) for value in identity):
+                raise ValueError('expectedDevice USB IDs and identity must use integer bytes')
+            if allow_empty_serial:
+                if not isinstance(expected['serialNumber'], str) or len(expected['serialNumber']) > 255:
+                    raise ValueError('expectedDevice.serialNumber must be a string of at most 255 characters')
+            else:
+                text_field(expected['serialNumber'], 'expectedDevice.serialNumber', 255)
+            actual = {key: self.device.get(key) for key in fields} if allow_empty_serial and self.device else self._binding()
+            if expected != actual:
+                raise ValueError('selected device does not match expectedDevice; reconnect before continuing')
+
     def _journal_path(self):
         binding = self._binding()
         if binding is None:
@@ -467,11 +489,12 @@ class Bridge:
         digest = hashlib.sha256(json.dumps(binding, sort_keys=True).encode()).hexdigest()
         return self.backup_dir / f'led-recovery-{digest}.json'
 
-    def _save_lighting_journal(self):
-        if self.baseline is None:
+    def _save_lighting_journal(self, *, baseline_path=None, pending_layers=None):
+        if self.baseline is None and baseline_path is None:
             return
         value = {'format': 'companion-lighting-recovery', 'version': 1, 'device': self._binding(),
-                 'baselineFile': Path(self.baseline_path).name, 'pendingLayers': sorted(self.modified_layers)}
+                 'baselineFile': Path(baseline_path or self.baseline_path).name,
+                 'pendingLayers': sorted(self.modified_layers if pending_layers is None else pending_layers)}
         temporary = self._persist('journal-temp', value)
         os.replace(temporary, self._journal_path())
         descriptor = os.open(self.backup_dir, os.O_RDONLY)
@@ -485,6 +508,7 @@ class Bridge:
         self.modified_layers.clear()
         self.applied.clear()
         self.lighting_recovery_required = False
+        self.batch_session_baseline = None
         if self._binding() is None or not self._journal_path().exists():
             return
         journal = json.loads(self._journal_path().read_text(encoding='utf-8'))
@@ -513,6 +537,22 @@ class Bridge:
         self.baseline, self.baseline_path = {'layers': layers, 'raw': raw}, str(path.resolve())
         self.modified_layers = set(pending)
         self.lighting_recovery_required = True
+        if saved.get('sessionBaselineFile') is not None:
+            session_file = saved['sessionBaselineFile']
+            if not isinstance(session_file, str) or not re.fullmatch(r'lighting-[0-9]{8}T[0-9]{6}-[0-9a-f]{32}\.json', session_file):
+                raise ValueError('invalid batch session baseline reference')
+            session_path = self.backup_dir / session_file
+            session = json.loads(session_path.read_text(encoding='utf-8'))
+            if session.get('format') != 'companion-lighting-baseline' or session.get('version') != 1 or any(session.get('device', {}).get(key) != value for key, value in self._binding().items()):
+                raise ValueError('batch session baseline device binding mismatch')
+            session_raw = session.get('raw')
+            if not isinstance(session_raw, list) or len(session_raw) != 3 or not all(isinstance(value, str) and re.fullmatch(r'[0-9a-fA-F]{128}', value) for value in session_raw):
+                raise ValueError('invalid batch session baseline reports')
+            records = [list(bytes.fromhex(value)) for value in session_raw]
+            if any(record[:2] != [3, 250] for record in records):
+                raise ValueError('invalid batch session baseline headers')
+            session_layers = [{'mode': record[2], 'colors': ['#' + bytes(record[i:i + 3]).hex() for i in range(3, 51, 3)]} for record in records]
+            self.batch_session_baseline = ({'layers': session_layers, 'raw': session_raw}, str(session_path.resolve()))
 
     def _baseline(self):
         if self.baseline is None:
@@ -564,11 +604,119 @@ class Bridge:
             raise ValueError(f'{error}; {outcome}; automation disabled') from error
         return {'changed': True, 'verified': True}
 
+    def save_profile_lighting(self, request):
+        self._unleased()
+        if set(request) - {'id', 'command', 'layers', 'expectedDevice'}:
+            raise ValueError('saveProfileLighting only accepts layers and optional expectedDevice')
+        layers = request.get('layers')
+        if not isinstance(layers, list) or not 1 <= len(layers) <= 3:
+            raise ValueError('profile lighting requires one to three selected layers')
+        desired = []
+        for layer in layers:
+            if not isinstance(layer, dict) or set(layer) != {'layer', 'mode', 'colors'}:
+                raise ValueError('each profile lighting layer requires only layer, mode, and colors')
+            rule = self._normalize_rule({**layer, 'source': 'manual', 'state': 'profile'})
+            desired.append({key: rule[key] for key in ('layer', 'mode', 'colors')})
+        selected = {value['layer'] for value in desired}
+        if len(selected) != len(desired):
+            raise ValueError('duplicate profile lighting layer')
+        self._connected()
+        if not self._lighting_supported() or self._binding() is None:
+            raise ValueError('profile lighting requires the verified device identity and serial')
+        if self.lighting_recovery_required:
+            raise ValueError('restoreLighting is required before saving profile lighting')
+        self._check_expected_device(request)
+        before = self.read_lighting()
+        if self.baseline is None:
+            path = self._persist('lighting', {'format': 'companion-lighting-baseline', 'version': 1,
+                                               'device': self.device, **before})
+            self.baseline, self.baseline_path = before, path
+        original, original_path = self.baseline, self.baseline_path
+        original_pending = self.modified_layers.copy()
+        original_enabled, original_result = self.enabled, self.last_result
+        # Crash recovery needs immediate pre-batch values for selected layers while
+        # retaining session originals for unrelated temporary state lighting.
+        checkpoint = {'layers': [value.copy() for value in original['layers']], 'raw': original['raw'][:]}
+        for layer in selected:
+            checkpoint['layers'][layer] = before['layers'][layer]
+            checkpoint['raw'][layer] = before['raw'][layer]
+        checkpoint_path = self._persist('lighting', {'format': 'companion-lighting-baseline', 'version': 1,
+                                                     'device': self.device, 'sessionBaselineFile': Path(original_path).name,
+                                                     **checkpoint})
+        pending = original_pending | selected
+        self._save_lighting_journal(baseline_path=checkpoint_path, pending_layers=pending)
+        self.baseline, self.baseline_path = checkpoint, checkpoint_path
+        self.batch_session_baseline = (original, original_path)
+        self.modified_layers = pending.copy()
+        self.applied = {layer: value for layer, value in enumerate(before['layers'])}
+        touched = []
+        try:
+            for value in desired:
+                touched.append(value['layer'])
+                self._apply_lighting(value)
+            after = self.read_lighting()
+            for value in desired:
+                actual = after['layers'][value['layer']]
+                if actual != {key: value[key] for key in ('mode', 'colors')}:
+                    raise ValueError('profile LED final readback did not match selected layer')
+            promoted = {'layers': [value.copy() for value in original['layers']], 'raw': original['raw'][:]}
+            for layer in selected:
+                promoted['layers'][layer] = after['layers'][layer]
+                # Preserve every uninterpreted response byte; only promote the
+                # freshly verified mode and 48 RGB bytes into its native record.
+                raw = bytearray.fromhex(before['raw'][layer])
+                raw[2:51] = bytes.fromhex(after['raw'][layer])[2:51]
+                promoted['raw'][layer] = raw.hex()
+            promoted_path = self._persist('lighting', {'format': 'companion-lighting-baseline', 'version': 1,
+                                                       'device': self.device, **promoted})
+            remaining = original_pending - selected
+            # Durable baseline and journal commit precede changing cleanup flags.
+            self._save_lighting_journal(baseline_path=promoted_path, pending_layers=remaining)
+            self.baseline, self.baseline_path = promoted, promoted_path
+            self.modified_layers = remaining
+            self.batch_session_baseline = None
+            changed = sum(before['layers'][value['layer']] != {key: value[key] for key in ('mode', 'colors')} for value in desired)
+            return {'persisted': True, 'verified': True, 'changed': changed, 'layers': desired,
+                    'baselinePath': promoted_path, 'previousBaselinePath': original_path}
+        except Exception as error:
+            self.enabled = False
+            self.baseline, self.baseline_path = checkpoint, checkpoint_path
+            self.modified_layers = pending.copy()
+            failures = []
+            try:
+                # This must precede rollback writes, including when promotion's
+                # journal rename succeeded but its directory fsync failed.
+                self._save_lighting_journal()
+            except Exception as journal_error:
+                failures.append(f'recovery journal: {journal_error}')
+            if not failures:
+                for layer in touched:
+                    try:
+                        self._write_lighting(layer, before['layers'][layer])
+                    except Exception as restore_error:
+                        failures.append(f'layer {layer}: {restore_error}')
+            if not failures:
+                try:
+                    self._save_lighting_journal(baseline_path=original_path, pending_layers=original_pending)
+                    self.baseline, self.baseline_path = original, original_path
+                    self.modified_layers = original_pending
+                    self.batch_session_baseline = None
+                    self.lighting_recovery_required = False
+                    self.enabled, self.last_result = original_enabled, original_result
+                except Exception as journal_error:
+                    failures.append(f'original journal: {journal_error}')
+            if failures:
+                self.lighting_recovery_required = True
+                raise ValueError(f'profile LED batch failed: {error}; recovery required: ' + '; '.join(failures)) from error
+            raise ValueError(f'profile LED batch failed: {error}; immediate previous LED values restored and verified') from error
+
     def restore_lighting(self):
         self._connected()
         self.enabled = False
         if self.baseline is None:
             raise ValueError('no lighting baseline exists in this device session')
+        if self.batch_session_baseline is not None:
+            self.baseline, self.baseline_path = self.batch_session_baseline
         failures = []
         for layer in range(3):
             self.modified_layers.add(layer)
@@ -583,6 +731,7 @@ class Bridge:
             self.lighting_recovery_required = True
             raise ValueError('lighting restoration not verified: ' + '; '.join(failures))
         self.lighting_recovery_required = False
+        self.batch_session_baseline = None
         return {'restored': True, 'verified': True, 'rulesEnabled': False}
 
     def status(self):
@@ -622,6 +771,7 @@ class Bridge:
                         self.baseline, self.baseline_path = None, None
                         self.modified_layers.clear()
                         self.lighting_recovery_required = False
+                        self.batch_session_baseline = None
                     self.applied.clear()
         return result
 

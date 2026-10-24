@@ -230,3 +230,11 @@ Profile action indices are logical editor slots. For the calibrated `514c:8850` 
 ### Direct IDs established by ordered measurement (0.4.5)
 
 The 0.4.4 90-degree calibration was incorrect and is removed. Explicit physical top-left-to-bottom-right input, paired with an independent raw read, resolves the last eight positions at 270° to raw IDs `[2,6,10,14,1,5,9,13]`, exactly matching the rotated editor grid. Profile IDs and raw USB IDs therefore remain identical. Apply/snapshot/import retain validated identity array boundaries; rotation affects geometry only. Existing profile content does not migrate or rotate. Reapplying a profile corrects records written by 0.4.4. Raw backup/restore behavior stays unchanged.
+
+## Persistent keymap lighting (0.5.0)
+
+`saveProfileLighting` accepts `{layers:[{layer,mode,colors}],expectedDevice?}`. Supply 1–3 unique layers (0–2), mode 0–5 and exactly 16 valid RGB hex colors per layer. The UI resolves nullable profile patches against a fresh read before calling. `expectedDevice`, supplied by the combined apply path, is the exact `{vendorId,productId,identity:[3 bytes],serialNumber}` binding; a mismatch is rejected before HID access. This command requires an idle lease, supported serial-bearing 514c:8850 / [16,3,11], and no pending LED recovery.
+
+The daemon saves a durable immediate checkpoint, applies and strictly reads back every selected layer, and restores that checkpoint on failure. On success only selected layers become the new persistent baseline; unrelated temporary state layers still restore at close. Unknown raw report tails are preserved. The result includes `persisted:true`, `verified:true`, changed count, layers and checkpoint paths. Journal write/reopen failures retain recovery gates. This operation deliberately persists keymap LED settings beyond normal app quit, unlike temporary state LED events.
+
+The renderer checks device path and serial before key apply, sends the expected binding for LED apply, and checks again before a key rollback. Key transactions also validate the opened binding atomically when acquiring a lease. Keys and LED are sequential verified operations, not a single power-loss-atomic transaction.

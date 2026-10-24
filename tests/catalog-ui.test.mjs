@@ -4,6 +4,8 @@ import * as profileApi from '../src/profile.js';
 import * as modelApi from '../src/models.js';
 import * as rotationApi from '../src/rotation.js';
 import * as shortcutApi from '../src/shortcuts.js';
+import * as keyLightingApi from '../src/key-lighting-ui.js';
+import {applyKeymap} from '../src/apply-keymap.js';
 const root=new URL('../',import.meta.url).pathname;
 const original=await fs.readFile(root+'src/app.js','utf8');
 const source=original.replace(/^import .*;\n/gm,'').split("\nif ('hid' in navigator)")[0];
@@ -12,7 +14,7 @@ const node=key=>{if(!nodes.has(key))nodes.set(key,{value:'',textContent:'',inner
 const document={querySelector:node,querySelectorAll:selector=>selector==='[data-rotate]'?['left','right','reset'].map(direction=>{const n=node('[data-rotate='+direction+']');n.dataset.rotate=direction;return n;}):[],addEventListener(){},body:node('body')};
 const values=new Map();const localStorage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)};
 globalThis.localStorage=localStorage;
-const deps={...profileApi,...modelApi,...rotationApi,...shortcutApi,document,localStorage,location:{hash:'',href:'http://127.0.0.1:4173/'},navigator:{},connectDevice(){throw Error('No real device access');},companionCall(){throw Error('No HID');},decodeAction(){},fromHex(){},validateBackup(){}};
+const deps={...profileApi,...modelApi,...rotationApi,...shortcutApi,...keyLightingApi,applyKeymap,document,localStorage,location:{hash:'',href:'http://127.0.0.1:4173/'},navigator:{},connectDevice(){throw Error('No real device access');},companionCall(){throw Error('No HID');},decodeAction(){},fromHex(){},validateBackup(){}};
 let calls=[];let callback;const diagnosticEvents=[];
 globalThis.miniKeyboardDesktop={log:async event=>diagnosticEvents.push(event),catalog:async(cmd,args)=>{calls.push([cmd,args]);return callback(cmd,args);}};
 const harness=`
@@ -41,5 +43,5 @@ node('#profile-name').value=rotate.name;ui.requestRotation('left');assert.equal(
 console.log('PASS: rotation applies all pad layers with knobs excluded from writes.');
 
 ui.setProfile(profileApi.createProfile('기능 편집'));ui.setDevice(null);ui.setFunctions({application:{id:'system'},groups:[{id:'navigation',name:'탐색',items:[{id:'enter',label:'선택 항목 열기',action:{type:'key',keys:['ENTER']},shortcut:'Enter'}]}],setupInstructions:[]});
-ui.chooseFunction('enter');assert.deepEqual(ui.getProfile().layers[0].actions[0],{type:'key',keys:['ENTER'],label:'선택 항목 열기'});assert.equal(ui.getProfile().applicationId,null);
+ui.chooseFunction('enter');assert.deepEqual(ui.getProfile().layers[0].actions[0],{type:'key',keys:['ENTER'],label:'선택 항목 열기'});assert.equal(Object.hasOwn(ui.getProfile(),'applicationId'),false);
 console.log('PASS: selecting a named function assigns its shortcut to the selected pad key without device writes.');
