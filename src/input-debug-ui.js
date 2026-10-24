@@ -35,7 +35,7 @@ export function initInputDebug({getContext,readSnapshot,download}){
   active=result===true;render();
  }
  function pause(){generation++;active=false;render();}
- function positionLabel(id,rotation,wireId=deviceActionId(session.modelId,id,{calibrated:session.calibrated})){
+ function positionLabel(id,rotation,wireId=deviceActionId(session.modelId,id)){
   const position=diagnosticPosition(session.modelId,rotation,id);
   return position?`${position.row}행 ${position.column}열 (화면 K${id} / USB ${wireId})`:`화면 K${id} / USB ${wireId}`;
  }
@@ -49,11 +49,11 @@ export function initInputDebug({getContext,readSnapshot,download}){
   if(!dialog.open||!active)return;
   render();
   const chord=eventChord(event);
-  appendObservation(observations,event,{id:expectedId,layer:session.layer,rotation:session.rotation,position:diagnosticPosition(session.modelId,session.rotation,expectedId),wireId:deviceActionId(session.modelId,expectedId,{calibrated:session.calibrated}),action:session.profileActions[session.layer-1]?.[expectedId-1]});
+  appendObservation(observations,event,{id:expectedId,layer:session.layer,rotation:session.rotation,position:diagnosticPosition(session.modelId,session.rotation,expectedId),wireId:deviceActionId(session.modelId,expectedId),action:session.profileActions[session.layer-1]?.[expectedId-1]});
   if(chord){
    lastChord=chord;
    matches=matchInput(chord,session.deviceActions,session.layer);
-   const last=observations.at(-1);last.chord=chord;last.matches=matches.map(item=>({...item,wireId:deviceActionId(session.modelId,item.id,{calibrated:session.calibrated})}));
+   const last=observations.at(-1);last.chord=chord;last.matches=matches.map(item=>({...item,wireId:deviceActionId(session.modelId,item.id)}));
    $('debug-chord').textContent=chord.join(' + ');
    renderMatch();
    clearHighlights();
@@ -70,7 +70,7 @@ export function initInputDebug({getContext,readSnapshot,download}){
  function fallback(event){if(desktop?.setInputDebug||!active||!dialog.open)return;event.preventDefault();event.stopImmediatePropagation();receive({type:event.type,key:event.key,code:event.code,control:event.ctrlKey,shift:event.shiftKey,alt:event.altKey,meta:event.metaKey,isAutoRepeat:event.repeat,isComposing:event.isComposing,location:event.location,timestamp:Date.now()});}
  async function refresh(){
   await setActive(false);matches=[];clearHighlights();render();$('debug-status').textContent='장치 설정 읽는 중…';$('debug-refresh').disabled=true;
-  try{const result=await readSnapshot();if(result&&result.modelId!==session.modelId)throw Error('모델 불일치');session.calibrated=result?.calibrated===true;session.actionSpace='editor-logical';session.deviceActions=result?.actions?structuredClone(result.actions):null;session.snapshotAt=result?new Date().toISOString():null;$('debug-match').textContent=result?'장치의 세 레이어를 읽었습니다.':'장치 연결 후 다시 읽어 주세요.';}
+  try{const result=await readSnapshot();if(result&&result.modelId!==session.modelId)throw Error('모델 불일치');session.mappingRevision=result?.mappingRevision||'direct-wire-v1';session.actionSpace='editor-logical';session.deviceActions=result?.actions?structuredClone(result.actions):null;session.snapshotAt=result?new Date().toISOString():null;$('debug-match').textContent=result?'장치의 세 레이어를 읽었습니다.':'장치 연결 후 다시 읽어 주세요.';}
   catch(error){$('debug-match').textContent=error.message==='모델 불일치'?'편집 모델과 연결한 장치 모델이 다릅니다. 모델을 맞춘 뒤 진단을 다시 여세요.':'설정을 읽지 못했습니다. 연결을 확인하세요.';session.deviceActions=null;session.snapshotAt=null;}
   finally{$('debug-refresh').disabled=false;render();}
  }
@@ -82,7 +82,7 @@ export function initInputDebug({getContext,readSnapshot,download}){
  $('debug-clear').onclick=()=>{observations=[];matches=[];lastChord=null;clearHighlights();$('debug-history').textContent='';$('debug-chord').textContent='키를 눌러 주세요';$('debug-raw').textContent='';$('debug-match').textContent='';render();};
  $('debug-export').onclick=async()=>{await setActive(false);download({format:'mini-keyboard-input-debug',version:1,createdAt:new Date().toISOString(),session,observations,limitations:['Input events cannot identify which physical keyboard sent them.','Matches are configuration candidates within the selected diagnostic layer, not physical scan codes.','OS shortcuts and media events may be unavailable.']},`keyboard-input-debug-${Date.now()}.json`);};
  return {async open(){
-  await setActive(false);const context=getContext();session={modelId:context.profile.modelId,rotation:context.profile.rotation,layer:context.layer+1,profileActions:structuredClone(context.profile.layers.map(item=>item.actions)),deviceActions:null,calibrated:false,actionSpace:'editor-logical',snapshotAt:null};
+  await setActive(false);const context=getContext();session={modelId:context.profile.modelId,rotation:context.profile.rotation,layer:context.layer+1,profileActions:structuredClone(context.profile.layers.map(item=>item.actions)),deviceActions:null,mappingRevision:'direct-wire-v1',actionSpace:'editor-logical',snapshotAt:null};
   expectedId=context.selected;observations=[];matches=[];lastChord=null;clearHighlights();$('debug-history').textContent='';$('debug-chord').textContent='키를 눌러 주세요';$('debug-raw').textContent='';$('debug-match').textContent='';
   dialog.showModal();render();await refresh();
  }};

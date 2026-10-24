@@ -1,6 +1,6 @@
 import { createProfile, validateProfile, actionLabel, encodeShare, decodeShare, saveToLibrary, loadLibrary, deleteFromLibrary } from './profile.js';
 import { connectDevice } from './device.js';
-import { toProfileActions,hasCalibratedMapping } from './action-mapping.js';
+import { toProfileActions } from './action-mapping.js';
 import { companionCall } from './companion.js';
 import { validateBackup, decodeAction, fromHex } from './protocol.js';
 import { MODELS, getModel, gridActionIds, actionCount } from './models.js';
@@ -127,8 +127,7 @@ function boardValue(id) {
 }
 function installSnapshot(backup) {
   const modelId=backup.modelId || device?.modelId || 'mini-16x3';
-  const calibrated=hasCalibratedMapping(backup);
-  deviceSnapshot = {modelId,calibrated,actions:backup.layers.map(records=>toProfileActions(modelId,records.map(raw=>{try{return decodeAction(fromHex(raw));}catch{return {type:'preserve'};}}),{calibrated}))};
+  deviceSnapshot = {modelId,mappingRevision:'direct-wire-v1',actions:backup.layers.map(records=>toProfileActions(modelId,records.map(raw=>{try{return decodeAction(fromHex(raw));}catch{return {type:'preserve'};}})))};
 }
 async function refreshSnapshot() { installSnapshot(await device.readAll()); renderBoard(); renderEditor(); }
 

@@ -223,6 +223,10 @@ The direct LED editor holds the same app device-work lock as key writes and LED 
 
 The diagnostic board includes the encoder strip and configured angle, inheriting `profile.rotation` from the editor without a separate direction preference. Encoder placement and key coordinates use the same clockwise rotation convention as the editor. Observations freeze the angle and selected expected position when input arrives. Displayed match IDs remain device-record IDs; accompanying row/column coordinates are computed for the recorded angle. This display change does not remap or write keys.
 
-### Editor slots versus USB records (0.4.4)
+### Editor slots versus USB records (0.4.4 — withdrawn in 0.4.5)
 
 Profile action indices are logical editor slots. For the calibrated `514c:8850` identity `[16,3,11]`, the JS controller converts key slots to firmware scan IDs at apply, and reverses that conversion for device snapshots/profile imports. Do not additionally rotate data according to profile.rotation: rotation affects the editor placement, while this calibration is a fixed base offset. Raw backups and restore commands remain firmware-ID ordered. Encoders and uncalibrated device identities use unchanged IDs. Existing keymap content and displayed arrangement are preserved; reapplying the profile installs the corrected physical placement. Diagnostic sessions mark `actionSpace: editor-logical` and include the actual `wireId` with matching observations.
+
+### Direct IDs established by ordered measurement (0.4.5)
+
+The 0.4.4 90-degree calibration was incorrect and is removed. Explicit physical top-left-to-bottom-right input, paired with an independent raw read, resolves the last eight positions at 270° to raw IDs `[2,6,10,14,1,5,9,13]`, exactly matching the rotated editor grid. Profile IDs and raw USB IDs therefore remain identical. Apply/snapshot/import retain validated identity array boundaries; rotation affects geometry only. Existing profile content does not migrate or rotate. Reapplying a profile corrects records written by 0.4.4. Raw backup/restore behavior stays unchanged.
