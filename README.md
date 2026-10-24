@@ -1,0 +1,88 @@
+# Mini Keyboard Studio
+
+Mini Keyboard 앱 없이 키·다이얼 설정을 만들고 USB 키보드에 적용하는 로컬 앱입니다. 사용자가 제공한 [디자인](design.md)을 바탕으로 다크 UI를 구성했습니다.
+
+## macOS 앱
+
+Apple Silicon용 **Mini Keyboard Studio 0.2.0**을 `/Users/kent/Applications/Mini Keyboard Studio.app`에 설치했습니다. 웹 편집기·HID 실행 파일·샘플 6종을 한 앱에 포함합니다. 별도 Node/Python 설치나 서버 실행 없이 앱을 엽니다. 배포 파일은 `dist/Mini Keyboard Studio-0.2.0-arm64-mac.zip`입니다.
+
+- 창을 닫으면 메뉴 막대에서 계속 실행됩니다. **종료** 또는 Cmd+Q는 HID 복구와 실행 파일 종료를 기다립니다.
+- 메뉴 막대 아이콘 또는 앱 메뉴에서 **설정 열기**, **로그인 시 자동 실행**, **데이터 폴더 열기**, **Codex 연동용 로컬 API**를 사용할 수 있습니다.
+- 설치된 앱의 로그인 자동 실행 등록은 `enabled`로 확인했습니다. 실제 로그아웃·재로그인 테스트는 수행하지 않았습니다.
+- 앱 데이터는 `~/Library/Application Support/Mini Keyboard Studio/`에 저장합니다. 키맵은 이 폴더의 앱 저장소, 원본 HID 백업은 `companion-backups/`에 보관합니다. 기존 브라우저 키맵과 백업은 JSON 내보내기·가져오기로 이동할 수 있습니다.
+- 로컬 API를 켜면 `http://localhost:4173/api/companion`에서 앱과 동일한 HID 소유자를 사용합니다. loopback/Host/Origin/세션 토큰 검증을 유지합니다. 일반 설정 UI는 이 포트에 의존하지 않습니다.
+- 앱 공유 링크는 `mini-keyboard://studio/#keymap=...`입니다. 링크 복사와 페이로드 검증은 확인했으며, 외부 프로그램에서 링크를 눌러 앱을 여는 동작은 자동화 URL 정책 제한으로 미검증입니다. JSON 공유도 지원합니다.
+
+현재 빌드는 로컬 사용용 ad-hoc 서명입니다. Developer ID 서명·Apple 공증을 받은 외부 배포 빌드와 구분합니다. [패키징 검증 기록](docs/electron-verification.md)을 참고하세요.
+
+## 웹 개발 실행
+
+```sh
+./scripts/start.sh
+```
+
+[http://localhost:4173](http://localhost:4173)을 엽니다. 브라우저 직접 연결은 데스크톱 Chrome/Edge의 WebHID를 사용합니다. 보조앱 연결은 이 저장소의 Python 런타임을 통해 장치를 제어합니다. 웹 파일은 정적이며 빌드·계정·클라우드 서버가 필요하지 않습니다.
+
+## 사용
+
+1. USB 데이터 케이블로 키보드를 연결하고 **키보드 연결**을 누릅니다. 최초 WebHID 연결은 브라우저 장치 선택 창에서 허용합니다.
+2. 키보드 그림에 현재 키 값이 표시됩니다. 키나 다이얼을 선택해 동작을 편집합니다. 작은 점은 아직 적용하지 않은 변경입니다.
+3. **저장**으로 로컬 보관함에, **내보내기**로 JSON 파일에 저장합니다. **공유** 링크는 키맵을 URL fragment에 담습니다. 공개 게시·업로드는 하지 않습니다.
+4. **적용** 한 번으로 모든 키 동작을 백업하고 변경분만 기록한 뒤 재읽기로 검증합니다. 실패하면 원본 복원을 시도하고 그 결과를 표시합니다.
+
+0·90·180·270도 회전은 키·다이얼 전체의 화면 배치와 JSON에 저장되며 실제 동작 ID를 바꾸지 않습니다. 키맵과 장치 모델이 다르면 적용을 막습니다. 기존 v1 키맵은 v2로 변환해 읽습니다.
+
+데스크톱 작업 화면은 창 높이에 맞춰 키보드를 조절합니다. 파일 가져오기·내보내기·공유는 왼쪽 **파일·공유**, 새 키맵은 **내 키맵**의 + 버튼에 있습니다. 작은 창과 모바일은 세로로 이어서 표시합니다.
+
+## 시작 템플릿
+
+왼쪽 **시작 템플릿**에서 VS Code Mac, Codex Mac, Claude Mac, 시스템 탐색·미디어, Forza Horizon 4 PC, Call of Duty: Modern Warfare 4 PC의 6종 샘플을 불러옵니다. 각 템플릿은 16키·3다이얼·3레이어를 편집하는 시작점이며, 선택만으로 장치에 기록하지 않습니다. 게임의 사용자 지정 바인딩 제안은 공식 기본 키와 구분해 표시합니다. 키맵을 수정하고 저장·내보내기·공유하거나 **적용**으로 연결 장치에 기록할 수 있습니다.
+
+## 보조앱과 상태·LED
+
+이 환경에는 `.venv`와 `hidapi`가 준비되어 있습니다. 새 환경에서는 다음을 한 번 실행합니다.
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r companion/requirements.txt
+```
+
+웹 개발 모드에서 연결 방식을 **보조앱**으로 선택하면 로컬 HID 프로세스를 시작합니다. 패키징된 Electron 앱은 동봉한 실행 파일을 자동으로 연결하며, 위의 `.venv` 개발 환경을 사용하지 않습니다.
+
+**상태·LED**에서 수동 상태 이벤트를 시험합니다. 기본은 미리보기이며, 장치 LED 사용을 켠 경우에만 기록합니다. LED 변경 전 원본 3개 레이어를 디스크에 저장하고 변경·복원을 재읽기로 검증합니다. 키맵 기록 중 상태 이벤트는 대기시키고 마지막 이벤트를 처리합니다. 반복 애니메이션은 실행하지 않습니다.
+
+중단된 키 기록은 소유자의 취소 또는 120초 동안 통신이 없는 세션의 재연결로 원본 복구를 시도합니다. 실패한 LED 복원은 장치 serial에 연결한 복구 기록으로 재개합니다. 강제 프로세스 종료나 전원 차단 시 키 자동 복구는 보장하지 않으며, 웹의 **장치 백업**에서 기록 전 백업을 복원해야 합니다.
+
+현재 제공하는 것은 공통 상태 인터페이스와 HID 제어입니다. Codex·Claude·VS Code 등 각 앱의 내부 상태 수집기와 macOS 활성 앱 관찰기는 구현하지 않았습니다. 각 어댑터는 [상태 인터페이스](docs/companion-interface.md)에 맞춰 별도 트랙으로 연결할 수 있습니다. [기능 검토](docs/capability-review.md)에 자동 전환과 LED의 제약을 정리했습니다.
+
+## 호환성·검증 범위
+
+- 실제 장치: `514C:8850`, 식별값 `10/03/0B`, 16키·3다이얼. 전체 75개 키 동작 읽기, 웹 적용, 독립 재읽기, 원본 복원을 확인했습니다.
+- 8종 모델의 편집 배치·회전·파일 형식을 지원합니다. 새 FD65 계열은 모델 응답과 전체 레코드를 확인한 뒤 처리합니다. 다른 모델의 물리 키 순서와 실행 결과는 실기 미검증입니다.
+- 원본 앱의 후보 VID/PID를 검색하되 USB 식별자만으로 쓰기 코덱을 고르지 않습니다. 구형 프로토콜은 기록을 잠급니다. 임의 HID 장치·QMK/VIA 전체 호환을 의미하지 않습니다.
+- 키·다이얼 백업과 LED 백업은 별개입니다. 키 백업은 LED·펌웨어 전체 이미지가 아닙니다. 브라우저 API에는 USB serial이 노출되지 않아 웹 백업은 VID/PID·모델·완전한 레코드·해시를 검증하며 기기 고유 serial 일치까지 보장하지 않습니다.
+- 물리 키 누름에 의한 모든 조합·매크로·미디어·마우스 동작, LED 시각 효과, 전원 재연결 후 유지는 아직 확인하지 않은 항목입니다.
+
+[REA 및 통신 조사](docs/research.md), [다중 기기 프로토콜 조사](docs/device-compatibility-research.md), [샘플 단축키 출처](docs/shortcut-sources.md).
+
+## 테스트
+
+```sh
+npm test
+.venv/bin/python -m unittest discover -s tests -p 'test_companion.py'
+```
+
+소스의 단위 테스트와 실제 USB 검증 증거는 구분합니다. `device-backups/`, `companion/backups/`는 로컬에만 보관하며 웹 서버로 제공하지 않습니다. 공유 URL에는 키 입력이 포함되므로 암호나 비밀 텍스트를 매크로에 넣어 공유하지 마세요.
+
+## 앱 빌드
+
+macOS arm64에서 다음 순서로 빌드합니다.
+
+```sh
+npm install
+python3 -m venv .venv
+.venv/bin/python -m pip install -r companion/build-requirements.txt
+npm run package:mac
+```
+
+개발용 Electron 실행은 `npx install-electron`을 한 번 실행한 뒤 `npm run desktop`을 사용합니다. `desktop/`, 웹 자산과 동봉 HID 런타임만 패키징하며 개인 키맵·백업·조사 증거·개발 가상 환경은 포함하지 않습니다.

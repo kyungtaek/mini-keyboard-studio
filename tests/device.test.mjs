@@ -1,0 +1,61 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { MiniKeyboard, profileFromBackup } from '../src/device.js';
+import { createProfile } from '../src/profile.js';
+import { createBackup } from '../src/protocol.js';
+class FakeHID extends EventTarget{
+ vendorId=0x514c;productId=0x8850;productName='Test board';opened=true;writes=[];failOnce=false;ignoreWrites=false;modelIdentity=[16,3,11];
+ layers=Array.from({length:3},(_,l)=>Array.from({length:25},(_,i)=>{const r=new Uint8Array(64);r.set([3,250,i+1,l+1,1,0,1,0,0,4]);return r;}));
+ emit(r){const e=new Event('inputreport');e.reportId=3;e.data=new DataView(r.slice(1).buffer);this.dispatchEvent(e);}
+ async sendReport(id,p){assert.equal(id,3);assert.equal(p.length,64);this.writes.push([...p]);
+  if(p[0]===251)this.emit(Uint8Array.from([3,251,...this.modelIdentity,...Array(59).fill(0)]));
+  if(p[0]===250)for(const r of this.layers[p[3]-1])this.emit(r);
+  if(p[0]===253&&p[1]!==254){if(this.failOnce){this.failOnce=false;throw Error('USB disconnected once');}if(!this.ignoreWrites){const r=new Uint8Array(64);r[0]=3;r[1]=250;r.set(p.slice(1,50),2);this.layers[r[3]-1][r[2]-1]=r;}}
+ }
+ async close(){this.opened=false;}
+}
+test('apply saves complete backup before writes, verifies all records, and does not rewrite preserve slots',async()=>{
+ const hid=new FakeHID(),d=new MiniKeyboard(hid);await d.initialize();const p=createProfile();p.layers[1].actions[4]={type:'key',keys:['F13']};
+ let saved;const result=await d.apply(p,{persistBackup:async b=>{assert.equal(hid.writes.filter(x=>x[0]===253).length,0);saved=b;}});
+ assert.equal(result.changed,1);assert.equal(hid.layers[1][4][9],104);assert.equal(saved.layers.flat().length,75);
+ assert.equal(hid.writes.filter(x=>x[0]===253&&x[1]!==254).length,1);
+ assert.equal(hid.writes.some(x=>x[0]===252),false);
+});
+test('backup persistence failure prevents writes',async()=>{
+ const h=new FakeHID(),d=new MiniKeyboard(h);await d.initialize();const p=createProfile();p.layers[0].actions[0]={type:'key',keys:['B']};
+ await assert.rejects(d.apply(p,{persistBackup:async()=>{throw Error('quota');}}),/quota/);assert.equal(h.writes.some(x=>x[0]===253),false);
+});
+test('a failed companion transaction aborts instead of releasing an uncertain write as complete',async()=>{
+ const hid=new FakeHID(),events=[];
+ hid.beginTransaction=async()=>events.push('begin');
+ hid.endTransaction=async()=>events.push('end');
+ hid.abortTransaction=async()=>events.push('abort');
+ const device=new MiniKeyboard(hid);await device.initialize();
+ const profile=createProfile();profile.layers[0].actions[0]={type:'key',keys:['B']};
+ await assert.rejects(device.apply(profile,{persistBackup:async()=>{throw Error('backup unavailable');}}),/backup unavailable/);
+ assert.deepEqual(events,['begin','abort']);
+ events.length=0;
+ await device.readAll();
+ assert.deepEqual(events,['begin','end']);
+});
+test('readback mismatch is failure and rollback verifies original',async()=>{
+ const h=new FakeHID(),d=new MiniKeyboard(h);await d.initialize();h.ignoreWrites=true;const p=createProfile();p.layers[0].actions[0]={type:'key',keys:['B']};
+ await assert.rejects(d.apply(p,{persistBackup:async()=>{}}),/복원.*확인/);assert.equal(h.layers[0][0][9],4);
+});
+test('partial-write failure rolls back touched layer and original error is retained',async()=>{
+ const h=new FakeHID(),d=new MiniKeyboard(h);await d.initialize();h.failOnce=true;const p=createProfile();p.layers[0].actions[0]={type:'key',keys:['B']};
+ await assert.rejects(d.apply(p,{persistBackup:async()=>{}}),/USB disconnected once.*복원.*확인/);
+ assert.equal(h.layers[0][0][9],4);
+});
+test('restore validates backup before writing, and current device settings can become editable profile',async()=>{
+ const h=new FakeHID(),d=new MiniKeyboard(h);await d.initialize();const b=await createBackup(h.layers,[16,3,11]);const p=await profileFromBackup(b,'기기에서 읽음');assert.deepEqual(p.layers[0].actions[0],{type:'key',keys:['A']});
+ b.sha256='bad';await assert.rejects(d.restore(b,{persistBackup:async()=>{}}),/해시/);assert.equal(h.writes.some(x=>x[0]===253),false);
+});
+test('new family devices use their own layout and USB identifiers for backup/apply/restore',async()=>{
+ const h=new FakeHID();h.vendorId=0x1189;h.productId=0x8842;h.modelIdentity=[6,2,11];h.layers=h.layers.map(l=>l.slice(0,12));
+ const d=new MiniKeyboard(h);await d.initialize();assert.equal(d.modelId,'mini-6x2');
+ const p=createProfile('작은 키맵','mini-6x2');p.layers[0].actions[11]={type:'key',keys:['F13']};let backup;
+ await d.apply(p,{persistBackup:async b=>{backup=b;}});assert.equal(backup.vid,0x1189);assert.equal(backup.pid,0x8842);assert.equal(backup.layers[0].length,12);
+ await d.restore(backup,{persistBackup:async()=>{}});assert.equal(h.layers[0][11][9],4);
+ await assert.rejects(d.apply(createProfile(),{persistBackup:async()=>{}}),/모델/);
+});

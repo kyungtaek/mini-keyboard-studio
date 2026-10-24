@@ -1,0 +1,34 @@
+{
+  "name": "mini-keyboard-studio",
+  "version": "0.2.0",
+  "description": "Local macro keyboard editor and HID companion",
+  "author": "Mini Keyboard Studio",
+  "main": "desktop/main.mjs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "desktop": "electron .",
+    "build:icons": "node scripts/build-icons.mjs",
+    "build:hid": ".venv/bin/python -m PyInstaller --noconfirm --clean --onedir --name mini-keyboard-hid --hidden-import hid --distpath build/hid --workpath build/pyinstaller --specpath build companion/bridge.py",
+    "package:mac": "npm run build:icons && npm run build:hid && electron-builder --mac --arm64"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "electron": "45.0.0",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "io.minikeyboard.studio",
+    "productName": "Mini Keyboard Studio",
+    "asar": true,
+    "directories": {"output":"dist"},
+    "files": ["desktop/**", "!desktop/icons/AppIcon.iconset/**", "src/**", "scripts/companion-api.mjs", "scripts/static-path.mjs", "index.html", "presets/**", "data/shortcuts/**", "package.json"],
+    "extraResources": [{"from":"build/hid/mini-keyboard-hid","to":"hid"}],
+    "protocols": [{"name":"Mini Keyboard keymap","schemes":["mini-keyboard"]}],
+    "mac": {"target":["dir","zip"],"category":"public.app-category.utilities","icon":"desktop/icons/app.icns","identity":"-","hardenedRuntime":false}
+  }
+}

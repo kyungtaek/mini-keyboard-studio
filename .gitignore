@@ -1,0 +1,15 @@
+.DS_Store
+node_modules/
+device-backups/
+artifacts/
+.venv/
+companion/backups/
+__pycache__/
+*.pyc
+build/
+dist/
+evidence/
+.env
+.env.*
+*.log
+catalog-auth*
