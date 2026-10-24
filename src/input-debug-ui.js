@@ -1,22 +1,28 @@
 import {eventChord,matchInput,appendObservation} from './input-debug.js';
-import {gridActionIds,getModel} from './models.js';
+import {diagnosticLayout,diagnosticPosition} from './input-debug-layout.js';
 import {actionLabel} from './profile.js';
 export function initInputDebug({getContext,readSnapshot,download}){
  const desktop=globalThis.miniKeyboardDesktop,escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const dialog=document.createElement('dialog');dialog.className='input-debug-dialog';dialog.id='input-debug-dialog';
  dialog.setAttribute('aria-labelledby','input-debug-title');
- dialog.innerHTML=`<div class="dialog-heading"><div><h2 id="input-debug-title">키 입력 진단</h2><p class="debug-caption">화면의 키를 선택한 뒤 실제 키보드에서 눌러 보세요.</p></div><button id="debug-close" aria-label="진단 닫기">×</button></div><div class="debug-toolbar"><span id="debug-status" role="status">일시 정지</span><button id="debug-toggle" class="primary">측정 시작</button><label class="debug-layer">레이어 <select id="debug-layer" aria-label="진단 레이어"><option value="1">레이어 1</option><option value="2">레이어 2</option><option value="3">레이어 3</option></select></label><button id="debug-refresh">설정 다시 읽기</button></div><div class="debug-content"><div><div id="debug-grid" class="debug-grid"></div><p id="debug-expected" class="debug-caption"></p></div><div class="debug-observation"><span class="debug-caption">실제 입력</span><strong id="debug-chord">키를 눌러 주세요</strong><code id="debug-raw"></code><p id="debug-match" role="status"></p><p class="debug-caption">파란색: 선택 레이어에서 일치하는 후보<br>선택 레이어의 설정만 비교합니다. 실제 장치 레이어는 키보드에서 전환합니다.</p></div></div><div id="debug-history" class="debug-history" aria-label="입력 기록"></div><div class="debug-bottom"><span id="debug-count">0 / 200 이벤트</span><button id="debug-clear">기록 지우기</button><button id="debug-export">측정 파일 저장</button></div><p class="debug-caption">측정 중 이 앱의 입력 동작을 차단합니다. 다른 앱으로 이동하면 정지합니다. OS 예약 키·미디어 키는 감지되지 않을 수 있습니다. 일반 키보드 입력도 포함되며, 물리 장치 구분은 할 수 없습니다.</p>`;
+ dialog.innerHTML=`<div class="dialog-heading"><div><h2 id="input-debug-title">키 입력 진단</h2><p class="debug-caption">설정 화면과 같은 노브 방향을 확인하고, 왼쪽 위부터 오른쪽으로 누르세요.</p></div><button id="debug-close" aria-label="진단 닫기">×</button></div><div class="debug-toolbar"><span id="debug-status" role="status">일시 정지</span><button id="debug-toggle" class="primary">측정 시작</button><label class="debug-layer">레이어 <select id="debug-layer" aria-label="진단 레이어"><option value="1">레이어 1</option><option value="2">레이어 2</option><option value="3">레이어 3</option></select></label><button id="debug-refresh">설정 다시 읽기</button></div><div class="debug-content"><div><p id="debug-orientation" class="debug-orientation"></p><div id="debug-device" class="debug-device"><div id="debug-knobs" class="debug-knobs" aria-label="다이얼 방향"></div><div id="debug-grid" class="debug-grid"></div></div><p id="debug-expected" class="debug-caption"></p></div><div class="debug-observation"><span class="debug-caption">실제 입력</span><strong id="debug-chord">키를 눌러 주세요</strong><code id="debug-raw"></code><p id="debug-match" role="status"></p><p class="debug-caption">파란색: 선택 레이어에서 일치하는 후보<br>선택 레이어의 설정만 비교합니다. 실제 장치 레이어는 키보드에서 전환합니다.</p></div></div><div id="debug-history" class="debug-history" aria-label="입력 기록"></div><div class="debug-bottom"><span id="debug-count">0 / 200 이벤트</span><button id="debug-clear">기록 지우기</button><button id="debug-export">측정 파일 저장</button></div><p class="debug-caption">측정 중 이 앱의 입력 동작을 차단합니다. 다른 앱으로 이동하면 정지합니다. OS 예약 키·미디어 키는 감지되지 않을 수 있습니다. 일반 키보드 입력도 포함되며, 물리 장치 구분은 할 수 없습니다.</p>`;
  document.body.append(dialog);
  const $=id=>dialog.querySelector('#'+id);
  let active=false,session=null,expectedId=1,observations=[],matches=[],generation=0,lastChord=null;
  const clearHighlights=()=>document.querySelectorAll('.debug-hit').forEach(node=>node.classList.remove('debug-hit'));
  function render(){
   if(!session)return;
-  const model=getModel(session.modelId),grid=gridActionIds(model,session.rotation)||Array.from({length:model.rows},(_,row)=>Array.from({length:model.columns},(_,col)=>row*model.columns+col+1).filter(id=>id<=model.keys));
+  const context=getContext();
+  if(context.profile.modelId===session.modelId)session.rotation=context.profile.rotation;
+  const {grid,knobSide,knobs}=diagnosticLayout(session.modelId,session.rotation);
+  $('debug-orientation').textContent=`설정 방향 ${session.rotation}° · 노브 ${({right:'오른쪽',bottom:'아래쪽',left:'왼쪽',top:'위쪽'})[knobSide]}`;
+  $('debug-device').dataset.side=knobSide;
+  $('debug-knobs').innerHTML=knobs.map(id=>`<span class="debug-knob" aria-label="다이얼 ${id}">${id}</span>`).join('');
+  $('debug-knobs').hidden=!knobs.length;
   $('debug-layer').value=String(session.layer);
   $('debug-grid').style.gridTemplateColumns=`repeat(${grid[0].length},minmax(0,1fr))`;
   $('debug-grid').innerHTML=grid.flat().map(id=>`<button data-debug-id="${id}" class="${id===expectedId?'debug-selected ':''}${matches.some(item=>item.layer===session.layer&&item.id===id)?'debug-hit':''}"><small>${String(id).padStart(2,'0')}</small><span>${escape(actionLabel(session.profileActions[session.layer-1]?.[id-1]||{type:'preserve'}))}</span></button>`).join('');
-  $('debug-expected').textContent=`확인할 위치: 레이어 ${session.layer} · 키 ${expectedId} · ${actionLabel(session.profileActions[session.layer-1]?.[expectedId-1]||{type:'preserve'})}`;
+  $('debug-expected').textContent=`확인할 위치: ${positionLabel(expectedId,session.rotation)} · 레이어 ${session.layer} · ${actionLabel(session.profileActions[session.layer-1]?.[expectedId-1]||{type:'preserve'})}`;
   $('debug-status').textContent=active?'● 입력 측정 중':'일시 정지';$('debug-toggle').textContent=active?'측정 정지':'측정 시작';
   $('debug-count').textContent=`${observations.length} / 200 이벤트`;
  }
@@ -28,16 +34,21 @@ export function initInputDebug({getContext,readSnapshot,download}){
   active=result===true;render();
  }
  function pause(){generation++;active=false;render();}
+ function positionLabel(id,rotation){
+  const position=diagnosticPosition(session.modelId,rotation,id);
+  return position?`${position.row}행 ${position.column}열 (장치 K${id})`:`장치 K${id}`;
+ }
  function renderHistory(){
-  $('debug-history').textContent=observations.filter(item=>item.expected.layer===session.layer).slice(-12).reverse().map(item=>`${new Date(item.event.timestamp).toLocaleTimeString()}  ${item.event.type}  ${item.event.code}  ${item.chord?.join('+')||''}  → ${item.matches?.map(m=>`L${m.layer}/K${m.id}`).join(', ')||'—'}`).join('\n');
+  $('debug-history').textContent=observations.filter(item=>item.expected.layer===session.layer).slice(-12).reverse().map(item=>`${new Date(item.event.timestamp).toLocaleTimeString()}  ${item.event.type}  ${item.event.code}  ${item.chord?.join('+')||''}  → ${item.matches?.map(m=>`${item.expected.rotation??session.rotation}° · L${m.layer} · ${positionLabel(m.id,item.expected.rotation??session.rotation)}`).join(', ')||'—'}`).join('\n');
  }
  function renderMatch(){
-  $('debug-match').textContent=matches.length?matches.map(item=>`장치 L${item.layer} · 키 ${item.id}`).join(' / '):session.deviceActions?`레이어 ${session.layer}에서 일치하는 단일 키 설정 없음`:'장치 설정을 읽으면 위치를 비교할 수 있습니다.';
+  $('debug-match').textContent=matches.length?matches.map(item=>`L${item.layer} · ${positionLabel(item.id,session.rotation)}`).join(' / '):session.deviceActions?`레이어 ${session.layer}에서 일치하는 단일 키 설정 없음`:'장치 설정을 읽으면 위치를 비교할 수 있습니다.';
  }
  function receive(event){
   if(!dialog.open||!active)return;
+  render();
   const chord=eventChord(event);
-  appendObservation(observations,event,{id:expectedId,layer:session.layer,action:session.profileActions[session.layer-1]?.[expectedId-1]});
+  appendObservation(observations,event,{id:expectedId,layer:session.layer,rotation:session.rotation,position:diagnosticPosition(session.modelId,session.rotation,expectedId),action:session.profileActions[session.layer-1]?.[expectedId-1]});
   if(chord){
    lastChord=chord;
    matches=matchInput(chord,session.deviceActions,session.layer);
