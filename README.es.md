@@ -13,7 +13,7 @@ Disponible en inglés, coreano, japonés, español, chino simplificado y chino t
 ## Funciones
 
 - **Tres capas.** Asigna teclas, combinaciones con modificadores, macros, controles multimedia y acciones del ratón a teclas y diales.
-- **Atajos fáciles de encontrar.** Consulta referencias de VS Code, Codex, Claude, controles del sistema, Forza Horizon 4 y Modern Warfare 4. Guarda un nombre descriptivo para cada función.
+- **Atajos fáciles de encontrar.** Consulta referencias de VS Code, Slack, Google Meet, cmux, Chrome, Claude, controles del sistema, Forza Horizon 4 y Modern Warfare 4. Guarda un nombre descriptivo para cada función.
 - **La orientación que prefieras.** Gira la disposición para adaptarla a la posición del teclado en tu escritorio.
 - **Iluminación por tecla.** Elige entre 15 colores y **Apagado**, con un modo LED común para cada capa.
 - **Guarda y comparte.** Conserva mapas localmente, importa y exporta JSON y comparte un enlace que contiene el perfil. La edición y los archivos locales funcionan sin conexión.

@@ -15,11 +15,6 @@
     "description": "Forza Horizon 4 PC용 사용자 지정 키 바인딩 제안. 공식 기본 키 표를 확인하지 못해 기본값으로 주장하지 않음. 레이어 1의 운전·카메라 동작을 게임 설정에서 제안 키에 직접 맞춘 뒤 사용. 2 표준 탐색, 3 PC 편집·OS 미디어. 수동 변속·클러치는 해당 주행 설정 필요. 실물·게임 검증 전 추천 초안."
   },
   {
-    "file": "sample-codex-mac.json",
-    "name": "Codex 앱 · Mac",
-    "description": "16키·3다이얼 × 3레이어. 공식 Codex 앱 명령 / 내장 브라우저 / 편집·미디어. CLI 단축키가 아님. META=Command. 레이어 2는 내장 브라우저가 포커스된 경우에 사용. 승인 전송용 자동 시퀀스 없음."
-  },
-  {
     "file": "sample-claude-mac.json",
     "name": "Claude 앱 · Mac · 빠른 입력 설정",
     "description": "16키·3다이얼 × 3레이어. 먼저 Claude Desktop 설정에서 Quick access shortcut=Option+Space 선택. 레이어 1은 입력·표준 Mac 편집, 2는 아티팩트/Slides 문맥 탐색, 3은 편집·미디어. Claude Code 키와 구분. Option 두 번·Caps Lock 음성은 자동 지정하지 않음."

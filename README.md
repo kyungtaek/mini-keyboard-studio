@@ -13,7 +13,7 @@ Available in English, Korean, Japanese, Spanish, Simplified Chinese and Traditio
 ## What you can do
 
 - **Build three layers.** Assign keys, modifier combinations, macros, media controls and mouse actions to keys and dials.
-- **Find useful shortcuts.** Browse references for VS Code, Codex, Claude, system controls, Forza Horizon 4 and Modern Warfare 4. Keep a readable function name on each assignment.
+- **Find useful shortcuts.** Browse references for VS Code, Slack, Google Meet, cmux, Chrome, Claude, system controls, Forza Horizon 4 and Modern Warfare 4. Keep a readable function name on each assignment.
 - **Choose your orientation.** Rotate the layout to match how the keyboard sits on your desk.
 - **Set key lighting.** Choose from 15 colors plus **Off**, with a shared LED mode for each layer.
 - **Keep and share keymaps.** Save locally, import or export JSON, and share a link containing the profile. Editing and local files work offline.

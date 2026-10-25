@@ -12,3 +12,4 @@ evidence/
 .env
 .env.*
 *.log
+poc/codex-midi/

@@ -1,6 +1,29 @@
 // Display-only names for bundled reference functions. Assigned labels in profiles
 // remain literal and are excluded by the DOM localizer.
 const table = `
+Mission Control·데스크탑 이동·Spotlight는 시스템 설정 > 키보드 > 키보드 단축키의 활성화 여부와 키 조합을 확인하세요.|Check Mission Control, desktop switching and Spotlight in System Settings > Keyboard > Keyboard Shortcuts.|システム設定 > キーボード > キーボードショートカットでMission Control・デスクトップ移動・Spotlightの有効化とキーを確認してください。|Comprueba Mission Control, escritorios y Spotlight en Ajustes del Sistema > Teclado > Funciones rápidas de teclado.|在系统设置 > 键盘 > 键盘快捷键中检查 Mission Control、桌面切换和 Spotlight 的启用状态与按键。|在系統設定 > 鍵盤 > 鍵盤快速鍵中檢查 Mission Control、桌面切換與 Spotlight 的啟用狀態與按鍵。
+앱 열기: 단축어 앱에서 원하는 앱을 여는 단축어를 만들고 세부사항 > 키보드 단축키 추가에서 Control + Option + Command + B(브라우저), T(터미널), N(메모)을 각각 연결하세요.|In Shortcuts, create shortcuts to open your chosen apps. In Details > Add Keyboard Shortcut, assign Control + Option + Command + B (browser), T (terminal), N (notes).|ショートカットで目的のアプリを開く処理を作成し、詳細 > キーボードショートカットを追加でControl + Option + Command + B（ブラウザー）、T（ターミナル）、N（メモ）をそれぞれ設定してください。|En Atajos, crea atajos para abrir las apps elegidas. En Detalles > Añadir función rápida de teclado, asigna Control + Option + Command + B (navegador), T (terminal), N (notas).|在快捷指令中创建打开所选应用的指令。在详细信息 > 添加键盘快捷键中分别绑定 Control + Option + Command + B（浏览器）、T（终端）、N（笔记）。|在捷徑中建立開啟所選應用程式的捷徑。在詳細資訊 > 加入鍵盤快速鍵中分別綁定 Control + Option + Command + B（瀏覽器）、T（終端機）、N（筆記）。
+창 절반 배치: 지원 앱의 창 메뉴에서 왼쪽·오른쪽 절반 배치 명령을 확인하고 시스템 설정 > 키보드 > 키보드 단축키 > 앱 단축키에 정확한 메뉴 제목과 Control + Option + Command + ← / →를 각각 등록하세요.|Find left/right half commands in a supported app's Window menu. In System Settings > Keyboard > Keyboard Shortcuts > App Shortcuts, register the exact menu titles with Control + Option + Command + ← / →.|対応アプリのウィンドウメニューで左右半分の配置項目を確認し、システム設定 > キーボード > キーボードショートカット > アプリのショートカットに正確なメニュー名とControl + Option + Command + ← / →を登録してください。|Busca los comandos de mitad izquierda/derecha en el menú Ventana de una app compatible. En Ajustes del Sistema > Teclado > Funciones rápidas de teclado > Funciones rápidas de apps, registra los títulos exactos con Control + Option + Command + ← / →.|在支持的应用的窗口菜单中找到左右半边排列命令。在系统设置 > 键盘 > 键盘快捷键 > 应用快捷键中填写准确的菜单标题，分别绑定 Control + Option + Command + ← / →。|在支援的應用程式視窗選單中找到左右半部排列指令。在系統設定 > 鍵盤 > 鍵盤快速鍵 > App 快速鍵中填寫正確的選單標題，分別綁定 Control + Option + Command + ← / →。
+회의 마이크: 회의 앱 설정에서 마이크 음소거 전환을 Control + Option + Command + M에 연결하세요. 앱이 사용자 지정 키를 지원해야 하며 앱 포커스 조건도 확인하세요. 미디어 음소거는 스피커 음소거입니다.|In your meeting app, bind microphone mute toggle to Control + Option + Command + M. Custom key support is required; check app focus requirements. Media mute controls speakers.|会議アプリでマイクのミュート切り替えにControl + Option + Command + Mを設定してください。カスタムキー対応とフォーカス条件を確認してください。メディアのミュートはスピーカー用です。|En la app de reuniones, asigna alternar silencio del micrófono a Control + Option + Command + M. Debe admitir teclas personalizadas; comprueba los requisitos de foco. El silencio multimedia controla los altavoces.|在会议应用中将切换麦克风静音绑定为 Control + Option + Command + M。应用须支持自定义按键；请检查焦点要求。媒体静音控制扬声器。|在會議應用程式中將切換麥克風靜音綁定為 Control + Option + Command + M。應用程式須支援自訂按鍵；請檢查焦點要求。媒體靜音控制揚聲器。
+영역 캡처 → 클립보드|Capture region to clipboard|範囲をクリップボードに撮影|Capturar área al portapapeles|区域截图到剪贴板|區域截圖至剪貼簿
+화면 잠금|Lock screen|画面をロック|Bloquear pantalla|锁定屏幕|鎖定螢幕
+Mission Control · 창 전체 보기|Mission Control · all windows|Mission Control・すべてのウィンドウ|Mission Control · todas las ventanas|Mission Control · 所有窗口|Mission Control · 所有視窗
+이전 데스크탑|Previous desktop|前のデスクトップ|Escritorio anterior|上一个桌面|上一個桌面
+다음 데스크탑|Next desktop|次のデスクトップ|Escritorio siguiente|下一个桌面|下一個桌面
+Spotlight 검색|Spotlight search|Spotlight検索|Buscar con Spotlight|Spotlight 搜索|Spotlight 搜尋
+현재 앱의 다음 창|Next window in current app|現在のアプリの次のウィンドウ|Siguiente ventana de la app actual|当前应用的下一个窗口|目前應用程式的下一個視窗
+현재 앱만 남기고 가리기|Hide other apps|ほかのアプリを隠す|Ocultar otras apps|隐藏其他应用|隱藏其他應用程式
+캡처 / 화면 녹화|Screenshot / screen recording|スクリーンショット・画面収録|Captura / grabación de pantalla|截图 / 录屏|截圖 / 螢幕錄製
+이모지 / 기호|Emoji / symbols|絵文字・記号|Emojis / símbolos|表情符号 / 符号|表情符號 / 符號
+전체 화면 전환|Toggle full screen|フルスクリーンを切り替え|Alternar pantalla completa|切换全屏|切換全螢幕
+브라우저 열기|Open browser|ブラウザーを開く|Abrir navegador|打开浏览器|開啟瀏覽器
+터미널 열기|Open terminal|ターミナルを開く|Abrir terminal|打开终端|開啟終端機
+메모 앱 열기|Open notes app|メモアプリを開く|Abrir app de notas|打开笔记应用|開啟筆記應用程式
+창 왼쪽 절반 배치|Tile window to left half|ウィンドウを左半分に配置|Colocar ventana en la mitad izquierda|窗口放置到左半边|視窗排列至左半部
+창 오른쪽 절반 배치|Tile window to right half|ウィンドウを右半分に配置|Colocar ventana en la mitad derecha|窗口放置到右半边|視窗排列至右半部
+회의 마이크 음소거 전환|Toggle meeting microphone mute|会議マイクのミュートを切り替え|Alternar silencio del micrófono de reunión|切换会议麦克风静音|切換會議麥克風靜音
+macOS 기본 단축키입니다. 사용자 설정과 앱 지원 여부에 따라 동작이 달라질 수 있습니다.|Default macOS shortcut. Behavior depends on your settings and app support.|macOSの標準ショートカットです。設定やアプリの対応状況により動作が異なります。|Atajo predeterminado de macOS. Depende de tus ajustes y de la compatibilidad de la app.|macOS 默认快捷键。行为取决于用户设置和应用支持情况。|macOS 預設快捷鍵。行為取決於使用者設定與應用程式支援情況。
+사용자 지정 연결용 키 조합입니다. 아래 설정 안내대로 같은 키를 먼저 연결하세요. macOS 기본 단축키가 아닙니다.|Custom trigger. First bind the same keys using the setup instructions below. This is not a default macOS shortcut.|カスタム連携用のキーです。下の手順で同じキーを先に設定してください。macOSの標準ショートカットではありません。|Combinación personalizada. Asigna primero las mismas teclas siguiendo las instrucciones. No es un atajo predeterminado de macOS.|自定义触发组合键。请先按照下方说明绑定相同按键。这不是 macOS 默认快捷键。|自訂觸發組合鍵。請先依照下方說明綁定相同按鍵。這不是 macOS 預設快捷鍵。
 PC 편집 / OS 미디어|PC editing / OS media|PC編集・OSメディア|Edición de PC / multimedia del sistema|PC 编辑 / 系统媒体|PC 編輯 / 系統媒體
 Safari / 창 관리|Safari / window management|Safari・ウィンドウ管理|Safari / gestión de ventanas|Safari / 窗口管理|Safari / 視窗管理
 게임 바인딩 제안|Suggested game bindings|ゲームの割り当て案|Asignaciones de juego sugeridas|游戏建议绑定|遊戲建議綁定
@@ -172,5 +195,90 @@ URL 복사|Copy URL|URLをコピー|Copiar URL|复制 URL|複製 URL
 확인 필요한 다음 채팅|Next chat needing attention|確認が必要な次のチャット|Siguiente chat que requiere atención|下一个待确认聊天|下一個待確認聊天
 L{0} · {1}|L{0} · {1!}|L{0}・{1!}|L{0} · {1!}|L{0} · {1!}|L{0} · {1!}
 키맵을 저장하고 다시 읽어 확인했습니다. {0}|Keymap saved and verified by readback. {0!}|キーマップを保存し、再読み込みで確認しました。{0!}|Mapa guardado y verificado mediante lectura. {0!}|键位已保存并重新读取确认。{0!}|鍵位已儲存並重新讀取確認。{0!}
+새 메시지|New message|新しいメッセージ|Nuevo mensaje|新消息|新訊息
+상태 설정|Set status|ステータスを設定|Establecer estado|设置状态|設定狀態
+Slack 설정|Slack settings|Slackの設定|Ajustes de Slack|Slack 设置|Slack 設定
+대화 내 검색|Search conversation|会話内を検索|Buscar en la conversación|在会话中搜索|在對話中搜尋
+이전 대화|Previous conversation|前の会話|Conversación anterior|上一个会话|上一個對話
+다음 대화|Next conversation|次の会話|Conversación siguiente|下一个会话|下一個對話
+이전 읽지 않은 대화|Previous unread conversation|前の未読の会話|Conversación sin leer anterior|上一个未读会话|上一個未讀對話
+다음 읽지 않은 대화|Next unread conversation|次の未読の会話|Conversación sin leer siguiente|下一个未读会话|下一個未讀對話
+대화 뒤로|Back in conversation history|会話履歴を戻る|Atrás en el historial de conversaciones|返回会话历史|返回對話記錄
+대화 앞으로|Forward in conversation history|会話履歴を進む|Adelante en el historial de conversaciones|前进到下一会话历史|前往下一筆對話記錄
+스레드 목록|Threads|スレッド一覧|Hilos|消息串列表|討論串列表
+모두 읽음 처리|Mark all as read|すべて既読にする|Marcar todo como leído|全部标为已读|全部標為已讀
+허들 시작 / 종료|Start or end huddle|ハドルを開始／終了|Iniciar o finalizar junta|开始或结束群组通话|開始或結束小組通話
+허들 마이크 전환|Toggle huddle microphone|ハドルのマイクを切り替え|Alternar micrófono de la junta|切换群组通话麦克风|切換小組通話麥克風
+파일 업로드|Upload file|ファイルをアップロード|Subir archivo|上传文件|上傳檔案
+굵게|Bold|太字|Negrita|粗体|粗體
+코드 서식|Code formatting|コード書式|Formato de código|代码格式|程式碼格式
+Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.|Use with the Slack Mac app focused. Huddle shortcuts depend on the current huddle state.|Mac版Slackにフォーカスがある状態で使用してください。ハドルのショートカットは現在のハドルの状態に応じて動作します。|Úsalo con la app de Slack para Mac en primer plano. Los atajos de juntas dependen del estado de la junta.|请在 Slack Mac 应用获得焦点时使用。群组通话快捷键的行为取决于当前通话状态。|請在 Slack Mac 應用程式取得焦點時使用。小組通話快速鍵的行為取決於目前通話狀態。
+마이크 켜기 / 끄기|Microphone on / off|マイクをオン／オフ|Activar o desactivar micrófono|开启或关闭麦克风|開啟或關閉麥克風
+카메라 켜기 / 끄기|Camera on / off|カメラをオン／オフ|Activar o desactivar cámara|开启或关闭摄像头|開啟或關閉攝影機
+화면 공유 시작|Start presenting|画面共有を開始|Empezar a presentar|开始共享屏幕|開始共用螢幕
+손들기 / 내리기|Raise / lower hand|挙手／手を下げる|Levantar o bajar la mano|举手或放下手|舉手或放下手
+회의 채팅 표시|Show meeting chat|会議チャットを表示|Mostrar chat de la reunión|显示会议聊天|顯示會議即時通訊
+참가자 표시|Show participants|参加者を表示|Mostrar participantes|显示参与者|顯示參與者
+참가자 타일 늘리기|Show more participant tiles|参加者タイルを増やす|Mostrar más mosaicos de participantes|增加参与者画面数量|增加參與者畫面數量
+참가자 타일 줄이기|Show fewer participant tiles|参加者タイルを減らす|Mostrar menos mosaicos de participantes|减少参与者画面数量|減少參與者畫面數量
+내 영상 최소화 / 확대|Minimize / expand own video|自分の映像を最小化／拡大|Minimizar o ampliar mi vídeo|最小化或放大自己的视频|最小化或放大自己的視訊
+PIP 모드|Picture-in-picture mode|ピクチャーインピクチャー|Modo de imagen en imagen|画中画模式|子母畫面模式
+현재 발언자 읽기|Announce current speaker|現在の発言者を読み上げ|Anunciar quién está hablando|读出当前发言者|讀出目前發言者
+회의 정보 읽기|Announce meeting information|会議情報を読み上げ|Anunciar información de la reunión|读出会议信息|讀出會議資訊
+Mac의 Google Meet 회의 화면에 포커스가 있어야 합니다. 발언자·회의 정보 읽기는 스크린 리더용입니다.|The Google Meet meeting view on Mac must have focus. Speaker and meeting announcements require a screen reader.|MacのGoogle Meet会議画面にフォーカスが必要です。発言者と会議情報の読み上げはスクリーンリーダー向けです。|La vista de la reunión de Google Meet en Mac debe tener el foco. Los anuncios del hablante y de la reunión requieren un lector de pantalla.|Mac 上的 Google Meet 会议页面必须获得焦点。发言者和会议信息朗读功能供屏幕阅读器使用。|Mac 上的 Google Meet 會議頁面必須取得焦點。發言者與會議資訊朗讀功能供螢幕閱讀器使用。
+새 워크스페이스|New workspace|新しいワークスペース|Nuevo espacio de trabajo|新建工作区|新增工作區
+워크스페이스 선택|Select workspace|ワークスペースを選択|Seleccionar espacio de trabajo|选择工作区|選取工作區
+이전 워크스페이스|Previous workspace|前のワークスペース|Espacio de trabajo anterior|上一个工作区|上一個工作區
+다음 워크스페이스|Next workspace|次のワークスペース|Espacio de trabajo siguiente|下一个工作区|下一個工作區
+사이드바 표시|Show sidebar|サイドバーを表示|Mostrar barra lateral|显示侧边栏|顯示側邊欄
+워크스페이스 이름 변경|Rename workspace|ワークスペース名を変更|Renombrar espacio de trabajo|重命名工作区|重新命名工作區
+오른쪽 분할|Split right|右に分割|Dividir a la derecha|向右拆分|向右分割
+아래쪽 분할|Split down|下に分割|Dividir hacia abajo|向下拆分|向下分割
+왼쪽 패널 선택|Focus left pane|左のペインを選択|Enfocar panel izquierdo|聚焦左侧面板|聚焦左側面板
+오른쪽 패널 선택|Focus right pane|右のペインを選択|Enfocar panel derecho|聚焦右侧面板|聚焦右側面板
+위 패널 선택|Focus pane above|上のペインを選択|Enfocar panel superior|聚焦上方面板|聚焦上方面板
+아래 패널 선택|Focus pane below|下のペインを選択|Enfocar panel inferior|聚焦下方面板|聚焦下方面板
+패널 확대 / 복원|Zoom / restore pane|ペインを拡大／元に戻す|Ampliar o restaurar panel|放大或还原面板|放大或還原面板
+알림 목록|Notifications|通知一覧|Notificaciones|通知列表|通知列表
+최신 읽지 않은 알림|Latest unread notification|最新の未読通知|Última notificación sin leer|最新未读通知|最新未讀通知
+주소창 선택|Focus address bar|アドレスバーを選択|Enfocar barra de direcciones|聚焦地址栏|聚焦網址列
+cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.|Uses cmux default shortcuts. If you changed them in cmux settings, edit these bindings to match. Browser actions apply to browser panes.|cmuxの既定のショートカットです。cmuxの設定で変更した場合は、その設定に合わせて編集してください。ブラウザー操作はブラウザーペインで使用します。|Usa los atajos predeterminados de cmux. Si los cambiaste en sus ajustes, adapta estas asignaciones. Las acciones del navegador se usan en paneles de navegador.|使用 cmux 默认快捷键。如果已在 cmux 设置中更改，请相应编辑键位。浏览器功能用于浏览器面板。|使用 cmux 預設快速鍵。如果已在 cmux 設定中更改，請相應編輯鍵位。瀏覽器功能用於瀏覽器面板。
+새 탭|New tab|新しいタブ|Nueva pestaña|新建标签页|新增分頁
+새 창|New window|新しいウィンドウ|Nueva ventana|新建窗口|新增視窗
+시크릿 창|Incognito window|シークレットウィンドウ|Ventana de incógnito|无痕窗口|無痕視窗
+탭 닫기|Close tab|タブを閉じる|Cerrar pestaña|关闭标签页|關閉分頁
+마지막 탭|Last tab|最後のタブ|Última pestaña|最后一个标签页|最後一個分頁
+뒤로|Back|戻る|Atrás|后退|返回
+앞으로|Forward|進む|Adelante|前进|前進
+페이지 찾기|Find on page|ページ内を検索|Buscar en la página|在页面中查找|在頁面中尋找
+다음 검색 결과|Next search result|次の検索結果|Siguiente resultado|下一个搜索结果|下一個搜尋結果
+방문 기록|History|履歴|Historial|历史记录|瀏覽記錄
+다운로드|Downloads|ダウンロード|Descargas|下载内容|下載內容
+북마크 바 표시|Show bookmarks bar|ブックマークバーを表示|Mostrar barra de marcadores|显示书签栏|顯示書籤列
+북마크 관리자|Bookmark manager|ブックマークマネージャー|Gestor de marcadores|书签管理器|書籤管理員
+개발자 도구|Developer tools|デベロッパーツール|Herramientas para desarrolladores|开发者工具|開發人員工具
+Chrome 설정|Chrome settings|Chromeの設定|Ajustes de Chrome|Chrome 设置|Chrome 設定
+Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.|Use with the Google Chrome Mac window focused. Sites that capture the same keys or customized settings may change the behavior.|Mac版Google Chromeのウィンドウにフォーカスがある状態で使用してください。サイトによるキーの取得や設定の変更で動作が異なる場合があります。|Úsalo con la ventana de Google Chrome para Mac enfocada. Los sitios que capturan las mismas teclas o los ajustes personalizados pueden cambiar el comportamiento.|请在 Google Chrome Mac 窗口获得焦点时使用。网站拦截相同按键或自定义设置可能改变其行为。|請在 Google Chrome Mac 視窗取得焦點時使用。網站攔截相同按鍵或自訂設定可能改變其行為。
+전체 화면 캡처|Capture entire screen|画面全体を撮影|Capturar toda la pantalla|截取整个屏幕|擷取整個螢幕
+영역 캡처|Capture selection|選択範囲を撮影|Capturar selección|截取选定区域|擷取選取範圍
+전체 화면 캡처 → 클립보드|Capture screen to clipboard|画面全体をクリップボードにコピー|Capturar pantalla en el portapapeles|截屏到剪贴板|擷取螢幕至剪貼簿
+현재 앱 창 전체 보기|Show all windows of current app|現在のアプリの全ウィンドウを表示|Mostrar todas las ventanas de la app actual|显示当前应用的所有窗口|顯示目前 App 的所有視窗
+앱 전환|Switch apps|アプリを切り替え|Cambiar de app|切换应用|切換 App
+앞 창 최소화|Minimize front window|手前のウィンドウを最小化|Minimizar ventana frontal|最小化前台窗口|最小化最前方視窗
+앱 설정|App settings|アプリの設定|Ajustes de la app|应用设置|App 設定
+macOS 기본 단축키입니다. 포커스와 시스템 설정에 따라 동작합니다.|A default macOS shortcut. Behavior depends on focus and system settings.|macOSの既定のショートカットです。フォーカスとシステム設定に応じて動作します。|Atajo predeterminado de macOS. El comportamiento depende del foco y de los ajustes del sistema.|macOS 默认快捷键。行为取决于焦点与系统设置。|macOS 預設快速鍵。行為取決於焦點與系統設定。
+macOS 기본 단축키 기준입니다. Mission Control·데스크탑 이동은 시스템 설정 > 키보드 > 키보드 단축키에서 활성화 상태를 확인하세요.|Uses default macOS shortcuts. Check that Mission Control and desktop switching are enabled in System Settings > Keyboard > Keyboard Shortcuts.|macOSの既定のショートカットです。システム設定 > キーボード > キーボードショートカットでMission Controlとデスクトップ移動が有効か確認してください。|Usa los atajos predeterminados de macOS. Comprueba que Mission Control y el cambio de escritorio estén activados en Ajustes del Sistema > Teclado > Funciones rápidas de teclado.|使用 macOS 默认快捷键。请在系统设置 > 键盘 > 键盘快捷键中检查 Mission Control 和桌面切换是否启用。|使用 macOS 預設快速鍵。請在系統設定 > 鍵盤 > 鍵盤快速鍵中檢查 Mission Control 與桌面切換是否啟用。
+탐색|Navigation|ナビゲーション|Navegación|导航|導覽
+메시지|Messages|メッセージ|Mensajes|消息|訊息
+회의 / 설정|Meetings / settings|会議／設定|Reuniones / ajustes|会议 / 设置|會議 / 設定
+회의 제어|Meeting controls|会議の操作|Controles de reunión|会议控制|會議控制
+참가자 / 채팅|Participants / chat|参加者／チャット|Participantes / chat|参与者 / 聊天|參與者 / 即時通訊
+보기|View|表示|Ver|视图|顯示
+워크스페이스|Workspaces|ワークスペース|Espacios de trabajo|工作区|工作區
+분할 패널|Split panes|分割ペイン|Paneles divididos|拆分面板|分割面板
+검색 / 브라우저|Search / browser|検索／ブラウザー|Búsqueda / navegador|搜索 / 浏览器|搜尋 / 瀏覽器
+탭 / 창|Tabs / windows|タブ／ウィンドウ|Pestañas / ventanas|标签页 / 窗口|分頁 / 視窗
+페이지 탐색|Page navigation|ページ移動|Navegación de página|页面导航|頁面導覽
+도구|Tools|ツール|Herramientas|工具|工具
 `;
 export const FUNCTION_ROWS=table.trim().split('\n').map(line=>line.split('|'));

@@ -1,0 +1,442 @@
+{
+  "schemaVersion": 2,
+  "id": "cmux-mac",
+  "title": "cmux",
+  "platform": "macOS",
+  "checkedAt": "2026-10-26T00:00:00+09:00",
+  "description": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+  "setupInstructions": [
+    "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다."
+  ],
+  "sources": [
+    {
+      "title": "cmux keyboard shortcuts",
+      "url": "https://cmux.com/docs/keyboard-shortcuts"
+    }
+  ],
+  "records": [
+    {
+      "id": "cmux-mac-1",
+      "label": "새 워크스페이스",
+      "keys": [
+        "META",
+        "N"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "N"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-2",
+      "label": "워크스페이스 선택",
+      "keys": [
+        "META",
+        "P"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "P"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-3",
+      "label": "이전 워크스페이스",
+      "keys": [
+        "CTRL",
+        "META",
+        "LEFT_BRACKET"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "CTRL",
+          "META",
+          "LEFT_BRACKET"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-4",
+      "label": "다음 워크스페이스",
+      "keys": [
+        "CTRL",
+        "META",
+        "RIGHT_BRACKET"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "CTRL",
+          "META",
+          "RIGHT_BRACKET"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-5",
+      "label": "사이드바 표시",
+      "keys": [
+        "META",
+        "B"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "B"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-6",
+      "label": "워크스페이스 이름 변경",
+      "keys": [
+        "META",
+        "SHIFT",
+        "R"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "SHIFT",
+          "R"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-7",
+      "label": "오른쪽 분할",
+      "keys": [
+        "META",
+        "D"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "D"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-8",
+      "label": "아래쪽 분할",
+      "keys": [
+        "META",
+        "SHIFT",
+        "D"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "SHIFT",
+          "D"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-9",
+      "label": "왼쪽 패널 선택",
+      "keys": [
+        "ALT",
+        "META",
+        "LEFT"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "ALT",
+          "META",
+          "LEFT"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-10",
+      "label": "오른쪽 패널 선택",
+      "keys": [
+        "ALT",
+        "META",
+        "RIGHT"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "ALT",
+          "META",
+          "RIGHT"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-11",
+      "label": "위 패널 선택",
+      "keys": [
+        "ALT",
+        "META",
+        "UP"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "ALT",
+          "META",
+          "UP"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-12",
+      "label": "아래 패널 선택",
+      "keys": [
+        "ALT",
+        "META",
+        "DOWN"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "ALT",
+          "META",
+          "DOWN"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-13",
+      "label": "패널 확대 / 복원",
+      "keys": [
+        "META",
+        "SHIFT",
+        "ENTER"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "SHIFT",
+          "ENTER"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-14",
+      "label": "명령 팔레트",
+      "keys": [
+        "META",
+        "SHIFT",
+        "P"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "SHIFT",
+          "P"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 3,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-15",
+      "label": "찾기",
+      "keys": [
+        "META",
+        "F"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "F"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 3,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-16",
+      "label": "알림 목록",
+      "keys": [
+        "META",
+        "I"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "I"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 3,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-17",
+      "label": "최신 읽지 않은 알림",
+      "keys": [
+        "META",
+        "SHIFT",
+        "U"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "SHIFT",
+          "U"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 3,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-18",
+      "label": "브라우저 열기",
+      "keys": [
+        "META",
+        "SHIFT",
+        "L"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "SHIFT",
+          "L"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 3,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "cmux-mac-19",
+      "label": "주소창 선택",
+      "keys": [
+        "META",
+        "L"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "L"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 3,
+      "status": "published-default",
+      "sourceUrl": "https://cmux.com/docs/keyboard-shortcuts",
+      "notes": "cmux 기본 키 기준입니다. cmux 설정에서 키를 바꿨다면 해당 설정에 맞춰 편집하세요. 브라우저 기능은 브라우저 패널에서 사용합니다.",
+      "confidence": "official-reference"
+    }
+  ]
+}

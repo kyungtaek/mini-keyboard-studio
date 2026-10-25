@@ -28,3 +28,11 @@ test('a replacement device is never used for key rollback after LED failure',asy
  await assert.rejects(applyKeymap(x.device,ledProfile(),{companionCall:x.call}),/복원도 확인하지 못했습니다/);
  assert.equal(x.calls.includes('restore-keys'),false);
 });
+test('pending LED state is restored on the same device before any key write',async()=>{
+ const x=setup();let pending=true;const call=x.call;
+ x.call=async(command,args)=>{if(command==='status'){x.calls.push(command);return {connected:true,device:actualDevice,capabilities:{lightingRead:true,lightingWrite:true},lightingRecoveryRequired:pending};}if(command==='restoreLighting'){x.calls.push(command);pending=false;return {verified:true};}return call(command,args);};
+ await applyKeymap(x.device,ledProfile(),{companionCall:x.call});assert.deepEqual(x.calls.slice(0,4),['status','restoreLighting','status','readLighting']);assert.ok(x.calls.indexOf('keys')>x.calls.indexOf('restoreLighting'));
+});
+test('failed LED recovery blocks writes; another device is never restored',async()=>{
+ for(const replace of [false,true]){const x=setup();x.call=async command=>{x.calls.push(command);if(command==='status')return {connected:true,device:replace?{...actualDevice,serialNumber:'other'}:actualDevice,capabilities:{lightingRead:true,lightingWrite:true},lightingRecoveryRequired:true};if(command==='restoreLighting')return {verified:false};throw Error('no writes allowed');};await assert.rejects(applyKeymap(x.device,ledProfile(),{companionCall:x.call}));assert.ok(!x.calls.includes('keys'));if(replace)assert.ok(!x.calls.includes('restoreLighting'));}
+});

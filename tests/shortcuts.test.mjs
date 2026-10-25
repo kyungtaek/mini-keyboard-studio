@@ -35,8 +35,8 @@ test('unspecified application loads the system catalog with useful navigation an
 
 test('each application registry entry resolves only its shipped dataset and returns assignable actions', async () => {
   const { APPLICATIONS, loadShortcutCatalog } = registry;
-  assert.equal(APPLICATIONS.length, 6);
-  assert.equal(new Set(APPLICATIONS.map(app => app.id)).size, 6);
+  assert.equal(APPLICATIONS.length, 9);
+  assert.equal(new Set(APPLICATIONS.map(app => app.id)).size, 9);
   for (const application of APPLICATIONS) {
     assert.ok(Array.isArray(application.bundleIds));
     const catalog = await loadShortcutCatalog(application.id, { fetcher: localFetcher });
@@ -148,4 +148,59 @@ test('lookup matches an assigned action independently of an optional saved label
   assert.equal(findShortcutLabel(catalog, { type: 'key', keys: ['META', 'S'], label: '사용자가 저장한 이름' }), '저장');
   assert.equal(findShortcutLabel(catalog, { type: 'key', keys: ['F24'] }), '');
   assert.equal(findShortcutLabel(catalog, { type: 'preserve' }), '');
+});
+
+test('recommended system features survive selection, profile export and HID encoding', async () => {
+  const { createProfile, validateProfile } = await import('../src/profile.js');
+  const { encodeAction, decodeAction } = await import('../src/protocol.js');
+  const catalog = await registry.loadShortcutCatalog('system', { fetcher: localFetcher });
+  const expected = {
+    'capture-clipboard': ['CTRL', 'SHIFT', 'META', '4'],
+    'lock-screen': ['CTRL', 'META', 'Q'],
+    'mission-control': ['CTRL', 'UP'],
+    'previous-desktop': ['CTRL', 'LEFT'],
+    'next-desktop': ['CTRL', 'RIGHT'],
+    spotlight: ['META', 'SPACE'],
+    'next-app-window': ['META', 'GRAVE'],
+    'hide-other-apps': ['ALT', 'META', 'H'],
+    'screenshot-recording': ['SHIFT', 'META', '5'],
+    'emoji-symbols': ['CTRL', 'META', 'SPACE'],
+    fullscreen: ['CTRL', 'META', 'F'],
+  };
+  for (const [id, keys] of Object.entries(expected)) {
+    const item = items(catalog).find(item => item.id === `system-${id}`);
+    assert.ok(item, id);
+    assert.deepEqual(item.action, { type: 'key', keys });
+    assert.equal(item.warning, undefined);
+  }
+  for (const item of items(catalog).filter(item => item.id.startsWith('system-'))) {
+    const profile = createProfile('System actions');
+    profile.layers[0].actions[0] = { ...item.action, label: item.label };
+    const restored = validateProfile(JSON.parse(JSON.stringify(profile)));
+    assert.equal(restored.layers[0].actions[0].label, item.label);
+    const raw = new Uint8Array(64); raw.set([3, 250, 1, 1]);
+    assert.deepEqual(decodeAction(encodeAction(raw, restored.layers[0].actions[0])), item.action);
+    assert.equal(profile.layers[0].actions[1].type, 'preserve');
+  }
+});
+
+test('system catalog contains defaults without fabricated app-launch or microphone bindings',async()=>{
+ const catalog=await registry.loadShortcutCatalog('system',{fetcher:localFetcher});
+ assert.ok(items(catalog).every(item=>item.status!=='configured-option'&&!item.warning));
+ for(const id of ['system-open-browser','system-open-terminal','system-open-notes','system-tile-left','system-tile-right','system-microphone-mute'])assert.ok(!items(catalog).some(item=>item.id===id));
+ assert.ok(items(catalog).some(item=>item.label==='전체 화면 캡처'));
+ assert.ok(items(catalog).some(item=>item.action.type==='media'&&item.action.key==='MUTE'));
+});
+
+test('new system function labels and setup help are translated in all supported locales', async () => {
+  const { translate, SUPPORTED_LOCALES } = await import('../src/i18n.js');
+  const catalog = await registry.loadShortcutCatalog('system', { fetcher: localFetcher });
+  const newItems = items(catalog).filter(item => item.id.startsWith('system-'));
+  assert.ok(newItems.length >= 17);
+  for (const locale of SUPPORTED_LOCALES.filter(locale => locale !== 'ko')) {
+    for (const text of [...newItems.flatMap(item => [item.label, item.notes]), ...catalog.setupInstructions]) {
+      assert.notEqual(translate(text, locale), text, `${locale}: ${text}`);
+      assert.doesNotMatch(translate(text, locale), /[가-힣]/);
+    }
+  }
 });

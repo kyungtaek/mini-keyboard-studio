@@ -1,3 +1,5 @@
+import {controlIcon} from './control-icons.js';
+import {swapProfileKeys,installKeySwapDrag} from './key-swap.js';
 import { createDOMLocalizer, createLanguageController } from './i18n.js';
 import { createProfile, validateProfile, actionLabel, encodeShare, decodeShare, saveToLibrary, loadLibrary, deleteFromLibrary } from './profile.js';
 import { connectDevice } from './device.js';
@@ -75,7 +77,7 @@ $('#app').innerHTML = `
     </aside>
     <main class="editor-main">
       <div class="profile-heading"><div class="profile-title"><label class="sr-only" for="profile-name">키맵 이름</label><input class="profile-name" id="profile-name" maxlength="80" aria-label="키맵 이름"><span class="sr-only" id="profile-meta"></span></div><span class="save-state" id="save-state">작업 자동 보관</span><button data-action="save" class="primary compact-save" title="내 키맵에 저장">${icon('save')}저장</button></div>
-      <div class="hardware-controls"><label class="model-field"><span>키보드 모델</span><select id="model-select">${modelList.map(model=>`<option value="${escapeHTML(model.id)}">${escapeHTML(model.name)}${model.verified?'':' · 실기 미검증'}</option>`).join('')}</select></label><div class="orientation-field"><span>놓는 방향</span><div class="orientation-options" role="group" aria-label="키보드 방향"><button data-rotate="left" aria-label="왼쪽으로 회전">↶ 왼쪽</button><button data-rotate="right" aria-label="오른쪽으로 회전">오른쪽 ↷</button><button data-rotate="reset" aria-label="방향 초기화">초기화</button><span id="rotation-angle" aria-label="현재 방향">0°</span></div></div></div>
+      <div class="hardware-controls"><label class="model-field"><span>키보드 모델</span><span class="select-control"><select id="model-select">${modelList.map(model=>`<option value="${escapeHTML(model.id)}">${escapeHTML(model.name)}${model.verified?'':' · 실기 미검증'}</option>`).join('')}</select>${controlIcon('chevron-down',{size:14})}</span></label><div class="orientation-field"><span>놓는 방향</span><div class="orientation-options" role="group" aria-label="키보드 방향"><button data-rotate="left" aria-label="왼쪽으로 회전">${controlIcon('rotate-left',{size:14})}<span>왼쪽</span></button><button data-rotate="right" aria-label="오른쪽으로 회전">${controlIcon('rotate-right',{size:14})}<span>오른쪽</span></button><button data-rotate="reset" aria-label="방향 초기화">${controlIcon('reset',{size:14})}<span>초기화</span></button><span id="rotation-angle" aria-label="현재 방향">0°</span></div></div></div>
       <div class="board-heading"><div class="layers" role="tablist" aria-label="편집할 레이어"></div><span class="model-note" id="model-note"></span></div>
       <div id="keyboard-layout" role="tabpanel" aria-labelledby="layer-tab-0"><div class="hardware-stage"><div class="board-shell"><div class="keyboard"><div class="hardware-face"><div class="key-grid" id="key-grid" aria-label="키패드"></div><div class="encoders" id="encoders" aria-label="다이얼 설정"></div></div><div class="keyboard-footer"><span id="board-model-label"></span><span class="keyboard-led" aria-hidden="true"></span><span id="board-layer-label">LAYER 01</span></div></div></div></div></div>
       <div class="quick-actions"><button class="quiet small" data-action="copy-layer" title="현재 레이어 복사">${icon('file')}레이어 복사</button><button class="quiet small" data-action="paste-layer" id="paste-layer" disabled>붙여넣기</button></div>
@@ -169,12 +171,12 @@ function renderBoard() {
   layer = Math.min(layer,profile.layers.length-1);
   $('#key-grid').innerHTML = gridIds.map(id => {
     const value = boardValue(id);
-    return `<button class="keycap ${value.draft.type==='disabled'?'is-disabled':''} ${selected === id ? 'selected' : ''} ${value.draft.type==='preserve'&&!value.current?'is-preserve':''} ${value.changed?'has-change':''}" data-key="${id}" aria-label="키 ${id}: ${escapeHTML(value.title)}" aria-pressed="${selected === id}" title="${escapeHTML(value.title)}"><span class="key-inner"><span class="keycap-number">${String(id).padStart(2,'0')}</span>${value.changed?'<span class="key-change" aria-label="편집한 동작"></span>':''}${featureName(value.draft)?`<span class="keycap-function" ${value.draft.label?'data-i18n-preserve':''}>${escapeHTML(featureName(value.draft))}</span>`:''}<span class="keycap-label">${escapeHTML(value.label)}</span></span></button>`;
+    return `<button class="keycap ${value.draft.type==='disabled'?'is-disabled':''} ${selected === id ? 'selected' : ''} ${value.draft.type==='preserve'&&!value.current?'is-preserve':''} ${value.changed?'has-change':''}" data-key="${id}" draggable="true" aria-label="키 ${id}: ${escapeHTML(value.title)}" aria-pressed="${selected === id}" title="${escapeHTML(value.title)}"><span class="key-inner"><span class="keycap-number">${String(id).padStart(2,'0')}</span>${value.changed?'<span class="key-change" aria-label="편집한 동작"></span>':''}${featureName(value.draft)?`<span class="keycap-function" ${value.draft.label?'data-i18n-preserve':''}>${escapeHTML(featureName(value.draft))}</span>`:''}<span class="keycap-label">${escapeHTML(value.label)}</span></span></button>`;
   }).join('');
   $('#encoders').innerHTML = Array.from({length:model.encoders},(_,index) => {
     const base = model.keys + 1 + index * 3;
     const press = boardValue(base+1);
-    return `<div class="encoder-block"><button class="encoder-knob ${selected === base+1 ? 'selected' : ''}" data-key="${base+1}" aria-label="다이얼 ${index+1} 누르기: ${escapeHTML(getLabel(getAction(base+1)))}" aria-pressed="${selected === base+1}" title="누르기 · ${escapeHTML(press.title)}"><span class="knob-label">${escapeHTML(press.label==='·'?'':press.label)}</span></button><div class="encoder-controls"><button class="encoder-turn ${selected === base ? 'selected' : ''}" data-key="${base}" aria-pressed="${selected === base}" aria-label="다이얼 ${index+1} 왼쪽 회전: ${escapeHTML(getLabel(getAction(base)))}" title="왼쪽 회전 · ${escapeHTML(boardValue(base).title)}">↶</button><span class="encoder-name">${String(index+1).padStart(2,'0')}</span><button class="encoder-turn ${selected === base+2 ? 'selected' : ''}" data-key="${base+2}" aria-pressed="${selected === base+2}" aria-label="다이얼 ${index+1} 오른쪽 회전: ${escapeHTML(getLabel(getAction(base+2)))}" title="오른쪽 회전 · ${escapeHTML(boardValue(base+2).title)}">↷</button></div></div>`;
+    return `<div class="encoder-block"><button class="encoder-knob ${selected === base+1 ? 'selected' : ''}" data-key="${base+1}" aria-label="다이얼 ${index+1} 누르기: ${escapeHTML(getLabel(getAction(base+1)))}" aria-pressed="${selected === base+1}" title="누르기 · ${escapeHTML(press.title)}"><span class="knob-label">${escapeHTML(press.label==='·'?'':press.label)}</span></button><div class="encoder-controls"><button class="encoder-turn ${selected === base ? 'selected' : ''}" data-key="${base}" aria-pressed="${selected === base}" aria-label="다이얼 ${index+1} 왼쪽 회전: ${escapeHTML(getLabel(getAction(base)))}" title="왼쪽 회전 · ${escapeHTML(boardValue(base).title)}">${controlIcon('knob-left',{size:14})}</button><span class="encoder-name">${String(index+1).padStart(2,'0')}</span><button class="encoder-turn ${selected === base+2 ? 'selected' : ''}" data-key="${base+2}" aria-pressed="${selected === base+2}" aria-label="다이얼 ${index+1} 오른쪽 회전: ${escapeHTML(getLabel(getAction(base+2)))}" title="오른쪽 회전 · ${escapeHTML(boardValue(base+2).title)}">${controlIcon('knob-right',{size:14})}</button></div></div>`;
   }).join('');
   $('.layers').innerHTML = profile.layers.map((item,index)=>`<button class="layer-tab" id="layer-tab-${index}" data-layer="${index}" role="tab" aria-selected="${index===layer}" tabindex="${index===layer?0:-1}" aria-controls="keyboard-layout">레이어 ${index+1}</button>`).join('');
   $('#rotation-angle').textContent=`${profile.rotation || 0}°`;
@@ -251,10 +253,10 @@ function renderFunctions() {
   list.innerHTML=groups.map(group=>{
     const items=group.items.filter(item=>!query||`${item.label} ${item.shortcut}`.toLocaleLowerCase().includes(query));
     if(!items.length)return '';
-    return `<section class="function-group"><h3>${escapeHTML(group.name)}</h3>${items.map(item=>{const active=JSON.stringify(current)===JSON.stringify(item.action)&&(!getAction().label||getAction().label===item.label);return `<button class="function-option ${active?'selected':''}" data-function="${escapeHTML(item.id)}" title="${escapeHTML(item.warning||item.notes||item.label)}" aria-pressed="${active}"><span>${escapeHTML(item.label)}${item.warning?'<i class="function-caution" aria-label="사전 설정 필요">!</i>':''}</span><kbd>${escapeHTML(item.shortcut)}</kbd></button>`;}).join('')}</section>`;
+    return `<section class="function-group"><h3>${escapeHTML(group.name)}</h3>${items.map(item=>{const active=JSON.stringify(current)===JSON.stringify(item.action)&&(!getAction().label||getAction().label===item.label);return `<button class="function-option ${active?'selected':''}" data-function="${escapeHTML(item.id)}" title="${escapeHTML(item.warning||item.notes||item.label)}" aria-pressed="${active}"><span>${escapeHTML(item.label)}${item.warning?'<small class="function-setup-badge">설정 필요</small>':''}</span><kbd>${escapeHTML(item.shortcut)}</kbd></button>`;}).join('')}</section>`;
   }).join('') || '<p class="function-empty">일치하는 기능이 없습니다.</p>';
   list.scrollTop=functionScroll;
-  $('#function-setup').textContent=functionCatalog.setupInstructions.join(' ');
+  $('#function-setup').innerHTML=functionCatalog.setupInstructions.map(instruction=>`<p>${escapeHTML(instruction)}</p>`).join('');
 }
 function chooseFunction(id) {
   if(busy){toast('장치 작업이 끝난 뒤 편집하세요.',true);return;}
@@ -447,6 +449,12 @@ async function connect() {
   catch (error) { toast(`연결하지 못했습니다: ${explain(error)}`,true); progress(explain(error)); }
   finally { connecting = false; busy = false; invalidatePendingConnection(); updateDeviceUI(); }
 }
+
+installKeySwapDrag({root:document,context:()=>({profile,layer,busy,recording}),onSwap:(from,to)=>{
+ profile=swapProfileKeys(profile,layer,from,to,Array.from({length:currentModel().keys},(_,i)=>snapshotAction(i+1)));
+ selected=to;touch();renderBoard();renderEditor();$(`[data-key="${to}"]`).focus({preventScroll:true});
+ toast(`키 ${from} ↔ ${to}`);
+},onError:error=>toast(explain(error),true)});
 
 document.addEventListener('click', async event => {
   const target = event.target.closest('button');

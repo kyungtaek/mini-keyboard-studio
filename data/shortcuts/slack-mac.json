@@ -1,0 +1,411 @@
+{
+  "schemaVersion": 2,
+  "id": "slack-mac",
+  "title": "Slack",
+  "platform": "macOS",
+  "checkedAt": "2026-10-26T00:00:00+09:00",
+  "description": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+  "setupInstructions": [
+    "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다."
+  ],
+  "sources": [
+    {
+      "title": "Slack keyboard shortcuts",
+      "url": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts"
+    }
+  ],
+  "records": [
+    {
+      "id": "slack-mac-1",
+      "label": "새 메시지",
+      "keys": [
+        "META",
+        "N"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "N"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-2",
+      "label": "상태 설정",
+      "keys": [
+        "META",
+        "SHIFT",
+        "Y"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "SHIFT",
+          "Y"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 3,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-3",
+      "label": "Slack 설정",
+      "keys": [
+        "META",
+        "COMMA"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "COMMA"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 3,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-4",
+      "label": "대화 내 검색",
+      "keys": [
+        "META",
+        "F"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "F"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-5",
+      "label": "전체 검색",
+      "keys": [
+        "META",
+        "G"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "G"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-6",
+      "label": "이전 대화",
+      "keys": [
+        "ALT",
+        "UP"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "ALT",
+          "UP"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-7",
+      "label": "다음 대화",
+      "keys": [
+        "ALT",
+        "DOWN"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "ALT",
+          "DOWN"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-8",
+      "label": "이전 읽지 않은 대화",
+      "keys": [
+        "ALT",
+        "SHIFT",
+        "UP"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "ALT",
+          "SHIFT",
+          "UP"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-9",
+      "label": "다음 읽지 않은 대화",
+      "keys": [
+        "ALT",
+        "SHIFT",
+        "DOWN"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "ALT",
+          "SHIFT",
+          "DOWN"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-10",
+      "label": "대화 뒤로",
+      "keys": [
+        "META",
+        "LEFT_BRACKET"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "LEFT_BRACKET"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-11",
+      "label": "대화 앞으로",
+      "keys": [
+        "META",
+        "RIGHT_BRACKET"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "RIGHT_BRACKET"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-12",
+      "label": "스레드 목록",
+      "keys": [
+        "META",
+        "SHIFT",
+        "T"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "SHIFT",
+          "T"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-13",
+      "label": "모두 읽음 처리",
+      "keys": [
+        "SHIFT",
+        "ESC"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "SHIFT",
+          "ESC"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-14",
+      "label": "허들 시작 / 종료",
+      "keys": [
+        "META",
+        "SHIFT",
+        "H"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "SHIFT",
+          "H"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 3,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-15",
+      "label": "허들 마이크 전환",
+      "keys": [
+        "META",
+        "SHIFT",
+        "SPACE"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "SHIFT",
+          "SPACE"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 3,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-16",
+      "label": "파일 업로드",
+      "keys": [
+        "META",
+        "O"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "O"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-17",
+      "label": "굵게",
+      "keys": [
+        "META",
+        "B"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "B"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "slack-mac-18",
+      "label": "코드 서식",
+      "keys": [
+        "META",
+        "SHIFT",
+        "C"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "SHIFT",
+          "C"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://slack.com/help/articles/201374536-Slack-keyboard-shortcuts",
+      "notes": "Slack Mac 앱이 포커스된 상태에서 사용하세요. 허들 키는 허들 상태에 따라 동작합니다.",
+      "confidence": "official-reference"
+    }
+  ]
+}

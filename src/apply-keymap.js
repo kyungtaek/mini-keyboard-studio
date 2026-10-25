@@ -15,9 +15,19 @@ export async function applyKeymap(device,value,{companionCall,persistBackup,onPr
  const requested=profile.layers.some(layer=>layer.lighting&&(layer.lighting.mode!==null||layer.lighting.colors.some(color=>color!==null)));
  if(!requested)return device.apply(profile,{persistBackup,onProgress});
  if(device.transport!=='companion'||typeof companionCall!=='function')throw Error('키맵의 LED 설정은 데스크톱 앱 장치 연결이 필요합니다.');
- const status=await companionCall('status');
- if(!status.connected||!status.capabilities?.lightingRead||!status.capabilities?.lightingWrite||status.leaseActive||status.lightingRecoveryRequired)throw Error('장치 LED 설정을 사용할 수 없습니다. 연결·복구 상태를 확인하세요.');
+ let status=await companionCall('status');
+ if(!status.connected)throw Error('키보드 연결을 확인한 뒤 다시 적용하세요.');
  const binding=expectedDevice(device,status);
+ if(status.leaseActive)throw Error('다른 장치 작업이 진행 중입니다. 끝난 뒤 다시 적용하세요.');
+ if(!status.capabilities?.lightingRead||!status.capabilities?.lightingWrite)throw Error('연결한 키보드의 LED 설정을 지원하지 않습니다.');
+ if(status.lightingRecoveryRequired){
+  onProgress('이전 임시 LED 설정을 복구하고 확인하는 중…');
+  const restored=await companionCall('restoreLighting');
+  if(restored.verified!==true)throw Error('이전 LED 설정 복구를 확인하지 못했습니다. 상태·LED에서 원본을 복원하세요.');
+  status=await companionCall('status');expectedDevice(device,status);
+  if(!status.connected||status.leaseActive||status.lightingRecoveryRequired||!status.capabilities?.lightingRead||!status.capabilities?.lightingWrite)throw Error('LED 복구 후 장치 상태를 확인하지 못했습니다. 다시 연결하세요.');
+ }
+
  const current=await companionCall('readLighting');
  if(!Array.isArray(current.layers)||current.layers.length!==3)throw Error('현재 LED 설정을 확인할 수 없습니다.');
  const layers=profile.layers.flatMap((layer,index)=>{

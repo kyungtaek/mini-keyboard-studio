@@ -1,0 +1,455 @@
+{
+  "schemaVersion": 2,
+  "id": "chrome-mac",
+  "title": "Google Chrome",
+  "platform": "macOS",
+  "checkedAt": "2026-10-26T00:00:00+09:00",
+  "description": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+  "setupInstructions": [
+    "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다."
+  ],
+  "sources": [
+    {
+      "title": "Google Chrome keyboard shortcuts",
+      "url": "https://support.google.com/chrome/answer/157179?hl=en"
+    }
+  ],
+  "records": [
+    {
+      "id": "chrome-mac-1",
+      "label": "새 탭",
+      "keys": [
+        "META",
+        "T"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "T"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-2",
+      "label": "새 창",
+      "keys": [
+        "META",
+        "N"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "N"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-3",
+      "label": "시크릿 창",
+      "keys": [
+        "META",
+        "SHIFT",
+        "N"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "SHIFT",
+          "N"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-4",
+      "label": "닫은 탭 다시 열기",
+      "keys": [
+        "META",
+        "SHIFT",
+        "T"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "SHIFT",
+          "T"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-5",
+      "label": "탭 닫기",
+      "keys": [
+        "META",
+        "W"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "W"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-6",
+      "label": "다음 탭",
+      "keys": [
+        "ALT",
+        "META",
+        "RIGHT"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "ALT",
+          "META",
+          "RIGHT"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-7",
+      "label": "이전 탭",
+      "keys": [
+        "ALT",
+        "META",
+        "LEFT"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "ALT",
+          "META",
+          "LEFT"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-8",
+      "label": "마지막 탭",
+      "keys": [
+        "META",
+        "9"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "9"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 1,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-9",
+      "label": "주소창 선택",
+      "keys": [
+        "META",
+        "L"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "L"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-10",
+      "label": "뒤로",
+      "keys": [
+        "META",
+        "LEFT_BRACKET"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "LEFT_BRACKET"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-11",
+      "label": "앞으로",
+      "keys": [
+        "META",
+        "RIGHT_BRACKET"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "RIGHT_BRACKET"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-12",
+      "label": "새로고침",
+      "keys": [
+        "META",
+        "R"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "R"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-13",
+      "label": "페이지 찾기",
+      "keys": [
+        "META",
+        "F"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "F"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-14",
+      "label": "다음 검색 결과",
+      "keys": [
+        "META",
+        "G"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "G"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-15",
+      "label": "방문 기록",
+      "keys": [
+        "META",
+        "Y"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "Y"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 3,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-16",
+      "label": "다운로드",
+      "keys": [
+        "META",
+        "SHIFT",
+        "J"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "SHIFT",
+          "J"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 3,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-17",
+      "label": "북마크 바 표시",
+      "keys": [
+        "META",
+        "SHIFT",
+        "B"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "SHIFT",
+          "B"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 3,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-18",
+      "label": "북마크 관리자",
+      "keys": [
+        "ALT",
+        "META",
+        "B"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "ALT",
+          "META",
+          "B"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 3,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-19",
+      "label": "개발자 도구",
+      "keys": [
+        "ALT",
+        "META",
+        "I"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "ALT",
+          "META",
+          "I"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 3,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "chrome-mac-20",
+      "label": "Chrome 설정",
+      "keys": [
+        "META",
+        "COMMA"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "COMMA"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 3,
+      "status": "published-default",
+      "sourceUrl": "https://support.google.com/chrome/answer/157179?hl=en",
+      "notes": "Google Chrome Mac 창이 포커스된 상태에서 사용하세요. 사이트가 같은 키를 가로채거나 사용자 설정이 바뀐 경우 동작이 달라질 수 있습니다.",
+      "confidence": "official-reference"
+    }
+  ]
+}

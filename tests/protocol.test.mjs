@@ -32,10 +32,24 @@ test('backup requires exact complete layer, action and layer headers plus digest
  const missing=layers.map(x=>x.slice());missing[2].pop();assert.throws(()=>validateRecords(missing),/25/);
  const wrong=layers.map(x=>x.map(y=>y.slice()));wrong[1][2][3]=1;assert.throws(()=>validateRecords(wrong),/레이어/);
 });
-test('shorter assignments retain inactive firmware bytes while clearing active entries',()=>{
- const r=raw(19);r[6]=3;r[9]=244;r[12]=242;r[15]=29;
- const media=encodeAction(r,{type:'media',key:'VOLUME_UP'});
- assert.equal(media[15],29);assert.equal(media[12],0);assert.deepEqual(decodeAction(media),{type:'media',key:'VOLUME_UP'});
- const key=encodeAction(r,{type:'key',keys:['B']});assert.equal(key[12],242);assert.equal(key[15],29);assert.equal(key[9],5);
- const disabled=encodeAction(r,{type:'disabled'});assert.equal(disabled[6],0);assert.equal(disabled[9],244);
+test('shorter assignments clear all inactive entries before the writer primes 14 slots',()=>{
+ const r=raw(19);r[6]=5;r[9]=241;r[12]=242;r[15]=243;r[18]=244;r[21]=68;r[49]=77;
+ for(const action of [{type:'key',keys:['META','LEFT_BRACKET']},{type:'key',keys:['CTRL','UP']},{type:'media',key:'VOLUME_UP'},{type:'disabled'}]){
+  const encoded=encodeAction(r,action);const end=7+encoded[6]*3;
+  assert.ok(encoded.slice(end,49).every(value=>value===0));assert.equal(encoded[49],77);
+  assert.deepEqual(decodeAction(encoded),action);
+ }
+ assert.deepEqual(encodeAction(r,{type:'preserve'}),r);
+});
+
+test('all eight modifier tokens and combinations use independent vendor codes',()=>{
+ const modifiers={CTRL:241,SHIFT:242,ALT:243,META:244,RCTRL:245,RSHIFT:246,RALT:247,RMETA:248};
+ for(const [modifier,code] of Object.entries(modifiers)){
+  const source=raw();source.fill(243,7,49);
+  const record=encodeAction(source,{type:'key',keys:[modifier,'LEFT_BRACKET']});
+  assert.deepEqual([...record.slice(7,13)],[0,0,code,0,0,47]);
+  assert.ok(record.slice(13,49).every(byte=>byte===0));
+ }
+ const record=encodeAction(raw(),{type:'key',keys:['CTRL','SHIFT','ALT','META','A']});
+ assert.deepEqual(Array.from({length:5},(_,i)=>record[9+i*3]),[241,242,243,244,4]);
 });

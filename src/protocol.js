@@ -29,6 +29,9 @@ function recordCheck(r){if(!(r instanceof Uint8Array)||r.length!==64||r[0]!==3||
 export function encodeAction(raw,action){
  recordCheck(raw);if(action.type==='preserve')return raw.slice();
  const r=raw.slice();r.fill(0,4,7);
+ // The writer primes all 14 entry slots before installing the final count.
+ // Clear the whole editable entry region so old modifier usages are never replayed.
+ r.fill(0,7,49);
  if(action.type==='disabled'){r[4]=1;return r;}
  if(action.type==='key'||action.type==='macro'){
   const steps=action.type==='key'?[action.keys]:action.steps;const codes=[];

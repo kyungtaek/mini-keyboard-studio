@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "checkedAt": "2026-10-24T14:00:00.000Z",
+  "checkedAt": "2026-10-26T00:00:00+09:00",
   "layout": {
     "gridActionIds": [
       [
@@ -79,22 +79,6 @@
       "readiness": "documented-context-dependent"
     },
     {
-      "id": "codex-mac",
-      "title": "Codex desktop app",
-      "platform": "macOS",
-      "datasetPath": "data/shortcuts/codex-mac.json",
-      "profilePath": "presets/sample-codex-mac.json",
-      "name": "Codex 앱 · Mac",
-      "modelId": "mini-16x3",
-      "layerNames": [
-        "Codex 앱",
-        "내장 브라우저",
-        "공통 편집 / 미디어"
-      ],
-      "activeActions": 75,
-      "readiness": "documented-context-dependent"
-    },
-    {
       "id": "claude-mac",
       "title": "Claude desktop app",
       "platform": "macOS",
@@ -156,6 +140,58 @@
         "공통 편집 / 미디어"
       ],
       "activeActions": 75,
+      "readiness": "documented-context-dependent"
+    },
+    {
+      "id": "slack-mac",
+      "title": "Slack",
+      "platform": "macOS",
+      "datasetPath": "data/shortcuts/slack-mac.json",
+      "layerNames": [
+        "탐색",
+        "메시지",
+        "회의 / 설정"
+      ],
+      "activeActions": 18,
+      "readiness": "documented-context-dependent"
+    },
+    {
+      "id": "google-meet-mac",
+      "title": "Google Meet",
+      "platform": "macOS",
+      "datasetPath": "data/shortcuts/google-meet-mac.json",
+      "layerNames": [
+        "회의 제어",
+        "참가자 / 채팅",
+        "보기"
+      ],
+      "activeActions": 12,
+      "readiness": "documented-context-dependent"
+    },
+    {
+      "id": "cmux-mac",
+      "title": "cmux",
+      "platform": "macOS",
+      "datasetPath": "data/shortcuts/cmux-mac.json",
+      "layerNames": [
+        "워크스페이스",
+        "분할 패널",
+        "검색 / 브라우저"
+      ],
+      "activeActions": 19,
+      "readiness": "documented-context-dependent"
+    },
+    {
+      "id": "chrome-mac",
+      "title": "Google Chrome",
+      "platform": "macOS",
+      "datasetPath": "data/shortcuts/chrome-mac.json",
+      "layerNames": [
+        "탭 / 창",
+        "페이지 탐색",
+        "도구"
+      ],
+      "activeActions": 20,
       "readiness": "documented-context-dependent"
     }
   ]

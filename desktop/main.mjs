@@ -47,7 +47,9 @@ if(!single){app.quit();}else{
  async function reportError(error){lastError=error.message;await log('Application error',{error});await recordStatus();dialog.showErrorBox(t('applicationError'),error.message);}
  async function toggleAPI(enabled){
   if(enabled&&!apiServer){
-   const server=createCompanionApi(gateway);
+   const apiGateway=Object.create(gateway);
+   apiGateway.call=async(command,args)=>{return gateway.call(command,args);};
+   const server=createCompanionApi(apiGateway);
    await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(4173,'127.0.0.1',resolve);});apiServer=server;
   }else if(!enabled&&apiServer){const server=apiServer;apiServer=null;await new Promise(resolve=>server.close(resolve));}
   settings.apiEnabled=enabled;await saveSettings();await recordStatus();buildMenu();
@@ -109,6 +111,7 @@ if(!single){app.quit();}else{
   ipcMain.handle('mini:companion',async(event,command,args)=>{
    if(quitting)throw Error(t('quitting'));
    validateInvocation({url:event.senderFrame?.url,mainFrame:event.senderFrame===window.webContents.mainFrame,senderId:event.sender.id},window.webContents.id,command,args);
+
    const result=await gateway.call(command,args);return result;
   });
   ipcMain.handle('mini:catalog',async(event,command,args={})=>{

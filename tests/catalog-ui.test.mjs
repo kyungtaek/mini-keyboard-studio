@@ -4,6 +4,8 @@ import * as profileApi from '../src/profile.js';
 import * as modelApi from '../src/models.js';
 import * as rotationApi from '../src/rotation.js';
 import * as shortcutApi from '../src/shortcuts.js';
+import {controlIcon} from '../src/control-icons.js';
+import * as keySwapApi from '../src/key-swap.js';
 import * as keyLightingApi from '../src/key-lighting-ui.js';
 import {applyKeymap,lightingActivationNote} from '../src/apply-keymap.js';
 const root=new URL('../',import.meta.url).pathname;
@@ -14,7 +16,7 @@ const node=key=>{if(!nodes.has(key))nodes.set(key,{value:'',textContent:'',inner
 const document={querySelector:node,querySelectorAll:selector=>selector==='[data-rotate]'?['left','right','reset'].map(direction=>{const n=node('[data-rotate='+direction+']');n.dataset.rotate=direction;return n;}):[],addEventListener(){},body:node('body')};
 const values=new Map();const localStorage={getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)};
 globalThis.localStorage=localStorage;
-const deps={...profileApi,...modelApi,...rotationApi,...shortcutApi,...keyLightingApi,applyKeymap,lightingActivationNote,document,localStorage,location:{hash:'',href:'http://127.0.0.1:4173/'},navigator:{},connectDevice(){throw Error('No real device access');},companionCall(){throw Error('No HID');},decodeAction(){},fromHex(){},validateBackup(){}};
+const deps={...profileApi,...modelApi,...rotationApi,...shortcutApi,...keyLightingApi,...keySwapApi,controlIcon,applyKeymap,lightingActivationNote,document,localStorage,location:{hash:'',href:'http://127.0.0.1:4173/'},navigator:{},connectDevice(){throw Error('No real device access');},companionCall(){throw Error('No HID');},decodeAction(){},fromHex(){},validateBackup(){}};
 let calls=[];let callback;const diagnosticEvents=[];
 globalThis.miniKeyboardDesktop={log:async event=>diagnosticEvents.push(event),catalog:async(cmd,args)=>{calls.push([cmd,args]);return callback(cmd,args);}};
 const harness=`

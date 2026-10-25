@@ -3,8 +3,11 @@ import { actionLabel, createProfile, validateProfile } from './profile.js';
 // Files are intentionally fixed here. A manifest entry never becomes a fetch URL.
 export const APPLICATIONS = Object.freeze([
   { id: 'system', name: '시스템 기본', platform: 'macOS', datasetFile: 'system-mac.json', bundleIds: [] },
+  { id: 'slack-mac', name: 'Slack', platform: 'macOS', datasetFile: 'slack-mac.json', bundleIds: ['com.tinyspeck.slackmacgap'] },
+  { id: 'google-meet-mac', name: 'Google Meet', platform: 'macOS', datasetFile: 'google-meet-mac.json', bundleIds: [] },
+  { id: 'cmux-mac', name: 'cmux', platform: 'macOS', datasetFile: 'cmux-mac.json', bundleIds: [] },
+  { id: 'chrome-mac', name: 'Google Chrome', platform: 'macOS', datasetFile: 'chrome-mac.json', bundleIds: ['com.google.Chrome'] },
   { id: 'vscode-mac', name: 'Visual Studio Code', platform: 'macOS', datasetFile: 'vscode-mac.json', bundleIds: ['com.microsoft.VSCode'] },
-  { id: 'codex-mac', name: 'Codex 앱', platform: 'macOS', datasetFile: 'codex-mac.json', bundleIds: [] },
   { id: 'claude-mac', name: 'Claude 앱', platform: 'macOS', datasetFile: 'claude-mac.json', bundleIds: [] },
   { id: 'modern-warfare4-pc', name: 'Call of Duty: Modern Warfare 4 (2026)', platform: 'Windows PC', datasetFile: 'modern-warfare4-pc.json', bundleIds: [] },
   { id: 'forza-horizon4-pc', name: 'Forza Horizon 4', platform: 'Windows PC', datasetFile: 'forza-horizon4-pc.json', bundleIds: [] },

@@ -71,7 +71,7 @@ test('media and rollback restore timing and inactive triples on firmware that co
  };
  const d=new MiniKeyboard(hid);await d.initialize();const before=await d.readAll();
  const p=createProfile();p.layers[0].actions[18]={type:'media',key:'VOLUME_UP'};p.layers[1].actions[19]={type:'key',keys:['B']};
- await d.apply(p,{persistBackup:async()=>{}});assert.equal(hid.layers[0][18][15],29);
+ await d.apply(p,{persistBackup:async()=>{}});assert.equal(hid.layers[0][18][15],0);
  await d.restore(before,{persistBackup:async()=>{}});assert.deepEqual((await d.readAll()).layers,before.layers);
 });
 

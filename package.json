@@ -1,6 +1,6 @@
 {
   "name": "mini-keyboard-studio",
-  "version": "0.6.1",
+  "version": "0.8.1",
   "description": "Local macro keyboard editor and HID companion",
   "author": "Mini Keyboard Studio",
   "main": "desktop/main.mjs",
@@ -37,7 +37,12 @@
       "index.html",
       "presets/**",
       "data/shortcuts/**",
-      "package.json"
+      "package.json",
+      "!desktop/codex-*",
+      "!desktop/chatgpt-ipc.mjs",
+      "!src/codex-*",
+      "!presets/sample-codex*.json",
+      "!data/shortcuts/codex-mac.json"
     ],
     "extraResources": [
       {

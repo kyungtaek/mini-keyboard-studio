@@ -3,73 +3,19 @@
   "id": "system-mac",
   "title": "System navigation and media",
   "platform": "macOS",
-  "checkedAt": "2026-10-24T14:00:00.000Z",
+  "checkedAt": "2026-10-26T00:00:00+09:00",
   "profilePath": "presets/sample-system-mac.json",
-  "description": "16키·3다이얼 × 3레이어. 방향·Enter·Tab·페이지 탐색 / Safari·편집 / 미디어. META+좌/우 앞뒤는 Codex 내장 브라우저 문맥이며 Mac 공통 동작이 아님. Safari 방문 기록은 레이어 2의 META+[ / ]. 미디어는 OS·플레이어 지원 필요.",
-  "setupInstructions": [],
+  "description": "macOS 기본 탐색·편집·미디어와 Mission Control·캡처 단축키",
+  "setupInstructions": [
+    "macOS 기본 단축키 기준입니다. Mission Control·데스크탑 이동은 시스템 설정 > 키보드 > 키보드 단축키에서 활성화 상태를 확인하세요."
+  ],
   "sources": [
     {
-      "title": "OpenAI official desktop app commands",
-      "url": "https://learn.chatgpt.com/docs/reference/commands"
-    },
-    {
-      "title": "USB-IF HID Usage Tables 1.5",
-      "url": "https://usb.org/sites/default/files/hut1_5.pdf"
-    },
-    {
-      "title": "Apple Safari shortcuts",
-      "url": "https://support.apple.com/guide/safari/keyboard-and-other-shortcuts-cpsh003/mac"
-    },
-    {
-      "title": "Apple Mac keyboard shortcuts",
+      "title": "Mac keyboard shortcuts",
       "url": "https://support.apple.com/en-us/102650"
     }
   ],
   "records": [
-    {
-      "id": "layer-1-browser-back",
-      "label": "내장 브라우저 뒤로",
-      "keys": [
-        "META",
-        "LEFT"
-      ],
-      "action": {
-        "type": "key",
-        "keys": [
-          "META",
-          "LEFT"
-        ]
-      },
-      "platform": "macOS",
-      "layer": 1,
-      "actionId": 4,
-      "status": "published-default",
-      "sourceUrl": "https://learn.chatgpt.com/docs/reference/commands",
-      "notes": "Only when the Codex built-in browser is focused. Safari history uses Command+[ / Command+].",
-      "confidence": "vendor-documented"
-    },
-    {
-      "id": "layer-1-browser-forward",
-      "label": "내장 브라우저 앞으로",
-      "keys": [
-        "META",
-        "RIGHT"
-      ],
-      "action": {
-        "type": "key",
-        "keys": [
-          "META",
-          "RIGHT"
-        ]
-      },
-      "platform": "macOS",
-      "layer": 1,
-      "actionId": 8,
-      "status": "published-default",
-      "sourceUrl": "https://learn.chatgpt.com/docs/reference/commands",
-      "notes": "Only when the Codex built-in browser is focused. Safari history uses Command+[ / Command+].",
-      "confidence": "vendor-documented"
-    },
     {
       "id": "layer-1-enter",
       "label": "Enter",
@@ -1497,6 +1443,406 @@
       "sourceUrl": "https://usb.org/sites/default/files/hut1_5.pdf",
       "notes": "Consumer HID usage; OS/player handling varies. Not an app-specific or game command.",
       "confidence": "usage-standard-app-behavior-unverified"
+    },
+    {
+      "id": "system-capture-clipboard",
+      "label": "영역 캡처 → 클립보드",
+      "keys": [
+        "CTRL",
+        "SHIFT",
+        "META",
+        "4"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "CTRL",
+          "SHIFT",
+          "META",
+          "4"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "os-convention",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 사용자 설정과 앱 지원 여부에 따라 동작이 달라질 수 있습니다.",
+      "confidence": "vendor-documented"
+    },
+    {
+      "id": "system-lock-screen",
+      "label": "화면 잠금",
+      "keys": [
+        "CTRL",
+        "META",
+        "Q"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "CTRL",
+          "META",
+          "Q"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "os-convention",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 사용자 설정과 앱 지원 여부에 따라 동작이 달라질 수 있습니다.",
+      "confidence": "vendor-documented"
+    },
+    {
+      "id": "system-mission-control",
+      "label": "Mission Control · 창 전체 보기",
+      "keys": [
+        "CTRL",
+        "UP"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "CTRL",
+          "UP"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "os-convention",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 사용자 설정과 앱 지원 여부에 따라 동작이 달라질 수 있습니다.",
+      "confidence": "vendor-documented"
+    },
+    {
+      "id": "system-previous-desktop",
+      "label": "이전 데스크탑",
+      "keys": [
+        "CTRL",
+        "LEFT"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "CTRL",
+          "LEFT"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "os-convention",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 사용자 설정과 앱 지원 여부에 따라 동작이 달라질 수 있습니다.",
+      "confidence": "vendor-documented"
+    },
+    {
+      "id": "system-next-desktop",
+      "label": "다음 데스크탑",
+      "keys": [
+        "CTRL",
+        "RIGHT"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "CTRL",
+          "RIGHT"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "os-convention",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 사용자 설정과 앱 지원 여부에 따라 동작이 달라질 수 있습니다.",
+      "confidence": "vendor-documented"
+    },
+    {
+      "id": "system-spotlight",
+      "label": "Spotlight 검색",
+      "keys": [
+        "META",
+        "SPACE"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "SPACE"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "os-convention",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 사용자 설정과 앱 지원 여부에 따라 동작이 달라질 수 있습니다.",
+      "confidence": "vendor-documented"
+    },
+    {
+      "id": "system-next-app-window",
+      "label": "현재 앱의 다음 창",
+      "keys": [
+        "META",
+        "GRAVE"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "GRAVE"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "os-convention",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 사용자 설정과 앱 지원 여부에 따라 동작이 달라질 수 있습니다.",
+      "confidence": "vendor-documented"
+    },
+    {
+      "id": "system-hide-other-apps",
+      "label": "현재 앱만 남기고 가리기",
+      "keys": [
+        "ALT",
+        "META",
+        "H"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "ALT",
+          "META",
+          "H"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "os-convention",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 사용자 설정과 앱 지원 여부에 따라 동작이 달라질 수 있습니다.",
+      "confidence": "vendor-documented"
+    },
+    {
+      "id": "system-screenshot-recording",
+      "label": "캡처 / 화면 녹화",
+      "keys": [
+        "SHIFT",
+        "META",
+        "5"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "SHIFT",
+          "META",
+          "5"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "os-convention",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 사용자 설정과 앱 지원 여부에 따라 동작이 달라질 수 있습니다.",
+      "confidence": "vendor-documented"
+    },
+    {
+      "id": "system-emoji-symbols",
+      "label": "이모지 / 기호",
+      "keys": [
+        "CTRL",
+        "META",
+        "SPACE"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "CTRL",
+          "META",
+          "SPACE"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "os-convention",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 사용자 설정과 앱 지원 여부에 따라 동작이 달라질 수 있습니다.",
+      "confidence": "vendor-documented"
+    },
+    {
+      "id": "system-fullscreen",
+      "label": "전체 화면 전환",
+      "keys": [
+        "CTRL",
+        "META",
+        "F"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "CTRL",
+          "META",
+          "F"
+        ]
+      },
+      "platform": "macOS",
+      "layer": 2,
+      "status": "os-convention",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 사용자 설정과 앱 지원 여부에 따라 동작이 달라질 수 있습니다.",
+      "confidence": "vendor-documented"
+    },
+    {
+      "id": "system-default-1",
+      "label": "전체 화면 캡처",
+      "keys": [
+        "SHIFT",
+        "META",
+        "3"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "SHIFT",
+          "META",
+          "3"
+        ]
+      },
+      "layer": 2,
+      "platform": "macOS",
+      "status": "published-default",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 포커스와 시스템 설정에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "system-default-2",
+      "label": "영역 캡처",
+      "keys": [
+        "SHIFT",
+        "META",
+        "4"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "SHIFT",
+          "META",
+          "4"
+        ]
+      },
+      "layer": 2,
+      "platform": "macOS",
+      "status": "published-default",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 포커스와 시스템 설정에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "system-default-3",
+      "label": "전체 화면 캡처 → 클립보드",
+      "keys": [
+        "CTRL",
+        "SHIFT",
+        "META",
+        "3"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "CTRL",
+          "SHIFT",
+          "META",
+          "3"
+        ]
+      },
+      "layer": 2,
+      "platform": "macOS",
+      "status": "published-default",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 포커스와 시스템 설정에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "system-default-4",
+      "label": "현재 앱 창 전체 보기",
+      "keys": [
+        "CTRL",
+        "DOWN"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "CTRL",
+          "DOWN"
+        ]
+      },
+      "layer": 2,
+      "platform": "macOS",
+      "status": "published-default",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 포커스와 시스템 설정에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "system-default-5",
+      "label": "앱 전환",
+      "keys": [
+        "META",
+        "TAB"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "TAB"
+        ]
+      },
+      "layer": 2,
+      "platform": "macOS",
+      "status": "published-default",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 포커스와 시스템 설정에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "system-default-6",
+      "label": "앞 창 최소화",
+      "keys": [
+        "META",
+        "M"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "M"
+        ]
+      },
+      "layer": 2,
+      "platform": "macOS",
+      "status": "published-default",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 포커스와 시스템 설정에 따라 동작합니다.",
+      "confidence": "official-reference"
+    },
+    {
+      "id": "system-default-7",
+      "label": "앱 설정",
+      "keys": [
+        "META",
+        "COMMA"
+      ],
+      "action": {
+        "type": "key",
+        "keys": [
+          "META",
+          "COMMA"
+        ]
+      },
+      "layer": 2,
+      "platform": "macOS",
+      "status": "published-default",
+      "sourceUrl": "https://support.apple.com/en-us/102650",
+      "notes": "macOS 기본 단축키입니다. 포커스와 시스템 설정에 따라 동작합니다.",
+      "confidence": "official-reference"
     }
   ],
   "limitations": [
