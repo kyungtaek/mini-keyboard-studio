@@ -43,6 +43,19 @@ ui.setProfile(rotate);ui.setDevice({...device,apply:async(p)=>{assert(p.layers.e
 node('#profile-name').value=rotate.name;ui.requestRotation('left');assert.equal(ui.getProfile().rotation,270);await ui.applyRotation();assert.equal(ui.getProfile().rotation,270);assert.deepEqual(ui.getProfile().layers[0].actions.slice(16),rotate.layers[0].actions.slice(16));
 console.log('PASS: rotation applies all pad layers with knobs excluded from writes.');
 
+// Distinct actions catch permutation mistakes that identical A assignments hide.
+const distinct=profileApi.createProfile('회전 위치 검증');
+distinct.layers.forEach(item=>item.actions=item.actions.map((_,index)=>({type:'key',keys:[String.fromCharCode(65+index%26)]})));
+let rotatedWrite;
+ui.setProfile(distinct);ui.setDevice({...device,apply:async value=>{rotatedWrite=structuredClone(value);return {changed:48};}});
+ui.requestRotation('left');await ui.applyRotation();
+assert.equal(rotatedWrite.rotation,270);
+assert.equal(rotatedWrite.layers[0].actions.slice(0,16).map(action=>action.keys[0]).join(''),'ABCDEFGHIJKLMNOP','rotating the device must not counter-rotate its assignments');
+assert.equal(ui.getProfile().layers[0].actions[3].keys[0],'D','screen top-left follows physical K4 after a left turn');
+assert.deepEqual(ui.getProfile().layers[0].actions.slice(16),distinct.layers[0].actions.slice(16));
+assert.equal(JSON.parse(values.get('mini-keyboard-studio:draft:v1')).layers[0].actions[3].keys[0],'D');
+
+
 ui.setProfile(profileApi.createProfile('기능 편집'));ui.setDevice(null);ui.setFunctions({application:{id:'system'},groups:[{id:'navigation',name:'탐색',items:[{id:'enter',label:'선택 항목 열기',action:{type:'key',keys:['ENTER']},shortcut:'Enter'}]}],setupInstructions:[]});
 ui.chooseFunction('enter');assert.deepEqual(ui.getProfile().layers[0].actions[0],{type:'key',keys:['ENTER'],label:'선택 항목 열기'});assert.equal(Object.hasOwn(ui.getProfile(),'applicationId'),false);
 console.log('PASS: selecting a named function assigns its shortcut to the selected pad key without device writes.');

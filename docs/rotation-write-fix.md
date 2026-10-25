@@ -1,5 +1,7 @@
 # 방향 재배치·FD 기록 오류·진단 로그 — 2026-10-24
 
+> **0.6.1 correction:** The historical keep-screen-position remap below counter-rotated function labels after applying an orientation change. Rotation now keeps physical action IDs and LED slots unchanged so the board and its functions turn together. Dial assignments remain unchanged; orientation does not add a USB permutation. The FD write/backup/readback findings below still apply.
+
 ## 사용자 요청과 화면
 
 - 방향 제어를 왼쪽 회전 / 오른쪽 회전 / 초기화로 축소한다.

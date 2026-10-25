@@ -46,11 +46,13 @@ const table = `
 닫기|Close|閉じる|Cerrar|关闭|關閉
 취소|Cancel|キャンセル|Cancelar|取消|取消
 만들기|Create|作成|Crear|创建|建立
-변경된 방향으로 키를 다시 설정할까요?|Rearrange keys for the new orientation?|新しい向きにキーを再配置しますか？|¿Reorganizar las teclas para la nueva orientación?|按新方向重新排列按键？|依新方向重新排列按鍵？
-세 레이어의 키를 기존 화면 위치에 맞춰 옮깁니다.|Keys on all three layers move to match their screen positions.|3つのレイヤーのキーを画面上の位置に合わせて移動します。|Las teclas de las tres capas se mueven según su posición en pantalla.|按屏幕位置移动全部三个图层的按键。|依畫面位置移動全部三個圖層的按鍵。
+회전된 키 배치를 적용했습니다.|Rotated layout applied.|回転した配列を適用しました。|Distribución girada aplicada.|已应用旋转后的布局。|已套用旋轉後的配置。
+회전된 키 배치를 적용했습니다. 노브 설정은 유지했습니다.|Rotated layout applied. Dial settings were kept.|回転した配列を適用しました。ダイヤル設定は維持しました。|Se aplicó la distribución girada. Se conservaron los ajustes de los diales.|已应用旋转后的布局，旋钮设置保持不变。|已套用旋轉後的配置，旋鈕設定保持不變。
+회전된 키 배치를 적용할까요?|Apply the rotated layout?|回転した配列を適用しますか？|¿Aplicar la distribución girada?|应用旋转后的布局？|套用旋轉後的配置？
+키와 기능 배치를 선택한 방향으로 함께 회전합니다.|Keys and functions rotate together in the selected direction.|キーと機能の配列を選択した向きに一緒に回転します。|Las teclas y funciones giran juntas en la dirección seleccionada.|按键和功能布局一起旋转到所选方向。|按鍵與功能配置一起旋轉至所選方向。
 노브 설정은 유지합니다.|Dial settings stay the same.|ダイヤル設定は維持されます。|Los ajustes de los diales se conservan.|旋钮设置保持不变。|旋鈕設定維持不變。
 화면 방향만 변경|Change display orientation only|画面の向きのみ変更|Cambiar solo la orientación visual|仅更改显示方向|僅變更顯示方向
-키 재배치·적용|Rearrange and apply|キーを再配置して適用|Reorganizar y aplicar|重排并应用|重排並套用
+회전된 배치 적용|Apply rotated layout|回転した配列を適用|Aplicar distribución girada|应用旋转布局|套用旋轉配置
 파일·공유|Files & sharing|ファイルと共有|Archivos y compartir|文件与分享|檔案與分享
 키맵 파일 열기|Open keymap file|キーマップファイルを開く|Abrir archivo de mapa|打开键位文件|開啟鍵位檔案
 JSON 파일에서 가져오기|Import from a JSON file|JSONファイルから読み込む|Importar desde JSON|从 JSON 文件导入|從 JSON 檔案匯入

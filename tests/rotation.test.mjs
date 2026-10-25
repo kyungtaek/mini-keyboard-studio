@@ -3,22 +3,24 @@ import {createProfile} from '../src/profile.js';
 import {gridActionIds} from '../src/models.js';
 import {rotateProfileKeys} from '../src/rotation.js';
 function fixture(){const p=createProfile();p.layers.forEach((l,index)=>l.actions=l.actions.map((_,i)=>({type:'key',keys:[String.fromCharCode(65+(i+index)%26)]})));return p;}
-test('rotation maps visible positions across all layers and leaves every knob unchanged',()=>{
- const p=fixture(),next=rotateProfileKeys(p,270);const oldGrid=gridActionIds(p.modelId,0).flat(),newGrid=gridActionIds(p.modelId,270).flat();
- for(let l=0;l<3;l++){oldGrid.forEach((id,i)=>assert.deepEqual(next.layers[l].actions[newGrid[i]-1],p.layers[l].actions[id-1]));assert.deepEqual(next.layers[l].actions.slice(16),p.layers[l].actions.slice(16));}
- assert.equal(next.rotation,270);assert.equal(p.rotation,0);assert.deepEqual(rotateProfileKeys(next,0).layers,p.layers);
+test('keys and functions rotate together rather than cancelling the visible rotation',()=>{
+ const p=fixture();
+ const expected={0:'ABCDEFGHIJKLMNOP',90:'MIEANJFBOKGCPLHD',180:'PONMLKJIHGFEDCBA',270:'DHLPCGKOBFJNAEIM'};
+ for(const angle of [0,90,180,270]){
+  const next=rotateProfileKeys(p,angle);
+  const visible=gridActionIds(next.modelId,angle).flat().map(id=>next.layers[0].actions[id-1].keys[0]).join('');
+  assert.equal(visible,expected[angle]);assert.deepEqual(next.layers,p.layers);assert.equal(next.rotation,angle);
+ }
+ assert.equal(p.rotation,0);
 });
-test('four right turns restore original key order; preserve slots require known live actions',()=>{
- const original=fixture();let p=original;for(const r of [90,180,270,0])p=rotateProfileKeys(p,r);assert.deepEqual(p.layers,original.layers);
- const empty=createProfile();assert.throws(()=>rotateProfileKeys(empty,90),/동작/);
- const live=original.layers.map(l=>l.actions);assert.deepEqual(rotateProfileKeys(empty,90,{currentActions:live}).layers[0].actions.slice(16),empty.layers[0].actions.slice(16));
- assert.throws(()=>rotateProfileKeys(fixture(),45),/회전/);
- const rectangular=createProfile('Rect','mini-6x1');assert.throws(()=>rotateProfileKeys(rectangular,90),/배치/);
+test('four turns restore original orientation, including unknown slots and rectangular models',()=>{
+ const original=createProfile();let p=original;for(const r of [90,180,270,0])p=rotateProfileKeys(p,r);
+ assert.deepEqual(p,original);assert.throws(()=>rotateProfileKeys(original,45),/회전/);
+ const rect=createProfile('Rect','mini-6x1');const rotated=rotateProfileKeys(rect,90);
+ assert.equal(rotated.rotation,90);assert.deepEqual(rotated.layers,rect.layers);
 });
-
-test('explicit key LED colors follow visible key rotation while layer mode stays common',()=>{
+test('per-key colors and dial assignments stay attached to the same physical controls',()=>{
  const p=fixture();p.layers[0].lighting={mode:2,colors:Array(16).fill(null)};p.layers[0].lighting.colors[0]='#ff0000';
- const next=rotateProfileKeys(p,270);const index=gridActionIds(p.modelId,0).flat().indexOf(1),destination=gridActionIds(p.modelId,270).flat()[index];
- assert.equal(next.layers[0].lighting.colors[destination-1],'#ff0000');assert.equal(next.layers[0].lighting.mode,2);
- assert.deepEqual(rotateProfileKeys(next,0).layers,p.layers);
+ const next=rotateProfileKeys(p,270);
+ assert.deepEqual(next.layers,p.layers);assert.deepEqual(rotateProfileKeys(next,0),p);
 });
